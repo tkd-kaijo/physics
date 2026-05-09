@@ -389,6 +389,12 @@ kbd {
   cursor: grabbing;
 }
 
+.wire-mode .component,
+.wire-mode .component:active,
+.wire-mode .component-hit {
+  cursor: crosshair;
+}
+
 .component-hit {
   fill: rgba(255, 255, 255, 0);
   stroke: none;

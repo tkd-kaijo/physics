@@ -35,7 +35,8 @@ const state = {
   counters: {},
   grid: true,
   snap: true,
-  hideCircuitText: true,
+  hideCircuitNames: true,
+  hideCircuitValues: true,
   title: "Untitled Circuit",
   note: "",
 };
@@ -70,7 +71,8 @@ function cacheElements() {
   els.wireModeBtn = document.querySelector("#wireModeBtn");
   els.gridToggle = document.querySelector("#gridToggle");
   els.snapToggle = document.querySelector("#snapToggle");
-  els.hideTextToggle = document.querySelector("#hideTextToggle");
+  els.hideNameToggle = document.querySelector("#hideNameToggle");
+  els.hideValueToggle = document.querySelector("#hideValueToggle");
   els.emptyInspector = document.querySelector("#emptyInspector");
   els.componentInspector = document.querySelector("#componentInspector");
   els.multiInspector = document.querySelector("#multiInspector");
@@ -106,8 +108,13 @@ function bindEvents() {
   els.snapToggle.addEventListener("change", () => {
     state.snap = els.snapToggle.checked;
   });
-  els.hideTextToggle.addEventListener("change", () => {
-    state.hideCircuitText = els.hideTextToggle.checked;
+  els.hideNameToggle.addEventListener("change", () => {
+    state.hideCircuitNames = els.hideNameToggle.checked;
+    pushHistory();
+    render();
+  });
+  els.hideValueToggle.addEventListener("change", () => {
+    state.hideCircuitValues = els.hideValueToggle.checked;
     pushHistory();
     render();
   });
@@ -221,9 +228,11 @@ function addComponent(input) {
 
 function render() {
   els.svg.classList.toggle("grid-hidden", !state.grid);
+  els.svg.classList.toggle("wire-mode", state.mode === "wire");
   els.gridToggle.checked = state.grid;
   els.snapToggle.checked = state.snap;
-  els.hideTextToggle.checked = state.hideCircuitText;
+  els.hideNameToggle.checked = state.hideCircuitNames;
+  els.hideValueToggle.checked = state.hideCircuitValues;
   els.selectModeBtn.classList.toggle("active", state.mode === "select");
   els.wireModeBtn.classList.toggle("active", state.mode === "wire");
   els.modeStatus.textContent = state.mode === "wire" ? "配線モード" : "選択モード";
@@ -296,7 +305,7 @@ function renderOverlay() {
   });
 
   const selectedText = getSelectedText();
-  if (selectedText && !state.hideCircuitText) {
+  if (selectedText && !isCircuitTextHidden(selectedText.field)) {
     const box = componentTextBox(selectedText.component, selectedText.field, { forPdf: false });
     els.overlayLayer.append(svgEl("rect", {
       class: "selected-text-ring",
@@ -398,21 +407,21 @@ function drawComponent(group, component) {
 
   group.append(shape);
 
-  if (!state.hideCircuitText) {
+  if (!state.hideCircuitNames) {
     const labelPosition = componentTextLocalPosition(component, "label");
-    const valuePosition = componentTextLocalPosition(component, "value");
     appendFormattedSvgText(group, "component-label", labelPosition.x, labelPosition.y, component.label, {
       componentId: component.id,
       field: "label",
       italicAlpha: true,
     });
-    if (component.value) {
-      appendFormattedSvgText(group, "component-value", valuePosition.x, valuePosition.y, component.value, {
-        componentId: component.id,
-        field: "value",
-        italicAlpha: false,
-      });
-    }
+  }
+  if (!state.hideCircuitValues && component.value) {
+    const valuePosition = componentTextLocalPosition(component, "value");
+    appendFormattedSvgText(group, "component-value", valuePosition.x, valuePosition.y, component.value, {
+      componentId: component.id,
+      field: "value",
+      italicAlpha: false,
+    });
   }
 }
 
@@ -609,15 +618,15 @@ function isClientPointInSvg(clientX, clientY) {
 
 function onSvgPointerDown(event) {
   if (event.button !== 0) return;
-  const clickedCanvas = event.target === els.svg || event.target.classList.contains("grid-bg");
-  if (!clickedCanvas) return;
-
   const point = normalizedPoint(getSvgPoint(event));
   if (state.mode === "wire") {
     event.stopPropagation();
     handleWireCanvasPoint(point);
     return;
   }
+
+  const clickedCanvas = event.target === els.svg || event.target.classList.contains("grid-bg");
+  if (!clickedCanvas) return;
 
   selectionDrag = {
     start: point,
@@ -970,7 +979,8 @@ function serializeState() {
     components: state.components,
     wires: state.wires,
     counters: state.counters,
-    hideCircuitText: state.hideCircuitText,
+    hideCircuitNames: state.hideCircuitNames,
+    hideCircuitValues: state.hideCircuitValues,
     title: state.title,
     note: state.note,
   });
@@ -982,7 +992,9 @@ function restoreState(snapshot) {
   state.components = data.components;
   state.wires = data.wires;
   state.counters = data.counters || {};
-  state.hideCircuitText = data.hideCircuitText ?? true;
+  const legacyHideText = data.hideCircuitText ?? true;
+  state.hideCircuitNames = data.hideCircuitNames ?? legacyHideText;
+  state.hideCircuitValues = data.hideCircuitValues ?? legacyHideText;
   state.title = data.title || "";
   state.note = data.note || "";
   state.selected = null;
@@ -1144,8 +1156,10 @@ function computeCircuitBounds() {
 function componentPdfBounds(component) {
   const symbol = rotatedLocalBounds(symbolLocalBounds(component.type), component);
   const boxes = [symbol];
-  if (!state.hideCircuitText) {
+  if (!state.hideCircuitNames) {
     boxes.push(componentTextBox(component, "label", { forPdf: true }));
+  }
+  if (!state.hideCircuitValues) {
     if (component.value) boxes.push(componentTextBox(component, "value", { forPdf: true }));
   }
   return mergeBounds(boxes);
@@ -1226,11 +1240,12 @@ function drawPdfJunctionDots(commands) {
 function drawPdfComponents(commands) {
   state.components.forEach((component) => {
     drawPdfShape(commands, component);
-    if (state.hideCircuitText) return;
-    const labelPosition = componentTextPosition(component, "label");
-    const valuePosition = componentTextPosition(component, "value");
-    pdfFormattedText(commands, component.label, labelPosition.x, labelPosition.y, LABEL_FONT_SIZE, "#111827", { italicAlpha: true });
-    if (component.value) {
+    if (!state.hideCircuitNames) {
+      const labelPosition = componentTextPosition(component, "label");
+      pdfFormattedText(commands, component.label, labelPosition.x, labelPosition.y, LABEL_FONT_SIZE, "#111827", { italicAlpha: true });
+    }
+    if (!state.hideCircuitValues && component.value) {
+      const valuePosition = componentTextPosition(component, "value");
       pdfFormattedText(commands, component.value, valuePosition.x, valuePosition.y, VALUE_FONT_SIZE, "#475569", { italicAlpha: false });
     }
   });
@@ -1902,6 +1917,12 @@ function getSelectedText() {
   const component = state.components.find((item) => item.id === state.selected.componentId);
   if (!component) return null;
   return { component, field: state.selected.field };
+}
+
+function isCircuitTextHidden(field) {
+  if (field === "label") return state.hideCircuitNames;
+  if (field === "value") return state.hideCircuitValues;
+  return false;
 }
 
 function isSelected(kind, id) {
