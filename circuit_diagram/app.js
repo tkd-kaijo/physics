@@ -71,8 +71,8 @@ function cacheElements() {
   els.wireModeBtn = document.querySelector("#wireModeBtn");
   els.gridToggle = document.querySelector("#gridToggle");
   els.snapToggle = document.querySelector("#snapToggle");
-  els.hideNameToggle = document.querySelector("#hideNameToggle");
-  els.hideValueToggle = document.querySelector("#hideValueToggle");
+  els.hideNameToggle = document.querySelector("#hideNameToggle") || document.querySelector("#hideTextToggle");
+  els.hideValueToggle = document.querySelector("#hideValueToggle") || document.querySelector("#hideTextToggle");
   els.emptyInspector = document.querySelector("#emptyInspector");
   els.componentInspector = document.querySelector("#componentInspector");
   els.multiInspector = document.querySelector("#multiInspector");

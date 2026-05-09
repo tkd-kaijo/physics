@@ -186,7 +186,7 @@ button:disabled {
 .workspace {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(204px, 236px) minmax(0, 1fr) minmax(244px, 286px);
+  grid-template-columns: minmax(292px, 332px) minmax(0, 1fr) minmax(244px, 286px);
   gap: 14px;
   padding: 14px;
 }
@@ -220,7 +220,7 @@ button:disabled {
 
 .palette-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -653,7 +653,7 @@ textarea:focus {
 
 @media (max-width: 1180px) {
   .workspace {
-    grid-template-columns: 200px minmax(0, 1fr) 244px;
+    grid-template-columns: 270px minmax(0, 1fr) 244px;
   }
 
   .part-icon svg {
@@ -672,7 +672,7 @@ textarea:focus {
   }
 
   .workspace {
-    grid-template-columns: 198px minmax(0, 1fr);
+    grid-template-columns: 260px minmax(0, 1fr);
   }
 
   .inspector-panel {
