@@ -101,7 +101,7 @@
     <h1>コンデンサー誘電体挿入シミュレーション</h1>
 
     <div id="canvas-container">
-        <canvas id="simCanvas" width="800" height="400"></canvas>
+        <canvas id="simCanvas" width="900" height="400"></canvas>
     </div>
 
     <div class="controls">
@@ -145,9 +145,9 @@
         const PLATE_WIDTH = 400;
         const PLATE_HEIGHT = 10;
         const PLATE_GAP = 100;
-        const CANVAS_WIDTH = 800;
+        const CANVAS_WIDTH = 900;
         const CANVAS_HEIGHT = 400;
-        const PLATE_X = (CANVAS_WIDTH - PLATE_WIDTH) / 2;
+        const PLATE_X = (CANVAS_WIDTH - PLATE_WIDTH) / 2 - 50; 
         const TOP_PLATE_Y = 120;
         const BOTTOM_PLATE_Y = TOP_PLATE_Y + PLATE_GAP;
         const BATTERY_V = 10;
@@ -234,12 +234,13 @@
             ctx.fillRect(PLATE_X, TOP_PLATE_Y, PLATE_WIDTH, PLATE_HEIGHT);
             ctx.fillRect(PLATE_X, BOTTOM_PLATE_Y, PLATE_WIDTH, PLATE_HEIGHT);
 
-            const N_total = Math.round(Q * 1.0);
             const visibleDWidth = xFraction * PLATE_WIDTH;
             const vacWidth = PLATE_WIDTH - visibleDWidth;
             const sigma_ratio = 1 / ( (1 - t_ratio) + t_ratio / EPS_R );
+
+            const N_total = Math.round(Q);
             const denom = (vacWidth + sigma_ratio * visibleDWidth);
-            const N_vac = denom > 0 ? Math.round(N_total * vacWidth / denom) : 0;
+            const N_vac = (denom > 0) ? Math.round(N_total * vacWidth / denom) : 0;
             const N_diel = N_total - N_vac;
 
             if (N_vac > 0) {
@@ -289,8 +290,13 @@
             const rect = canvas.getBoundingClientRect();
             const mx = e.clientX - rect.left;
             const my = e.clientY - rect.top;
-            const dx = PLATE_X + (PLATE_WIDTH * (1 - (dielectricPos / 100)));
-            if (mx >= dx && mx <= dx + PLATE_WIDTH && my >= TOP_PLATE_Y && my <= BOTTOM_PLATE_Y) isDragging = true;
+            const xF = dielectricPos / 100;
+            const dx = PLATE_X + (PLATE_WIDTH * (1 - xF));
+            const t_ratio = isHalfThickness ? 0.5 : 1.0;
+            const gapTotalHeight = PLATE_GAP - PLATE_HEIGHT;
+            const dH = gapTotalHeight * t_ratio;
+            const dY = TOP_PLATE_Y + PLATE_HEIGHT + (gapTotalHeight - dH) / 2;
+            if (mx >= dx && mx <= dx + PLATE_WIDTH && my >= dY && my <= dY + dH) isDragging = true;
         });
         window.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
