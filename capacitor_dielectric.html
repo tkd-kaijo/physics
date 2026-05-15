@@ -111,12 +111,17 @@
             <p style="font-size: 0.8em; color: #888;">ONで充電開始、OFFで電荷固定</p>
         </div>
         <div class="control-group">
-            <label>誘電体の挿入量 (比誘電率 εr = 2)</label>
+            <label>誘電体の挿入量 (εr = 2)</label>
             <input type="range" id="dielectricSlider" min="0" max="100" value="0">
+        </div>
+        <div class="control-group">
+            <label>誘電体の厚み</label>
+            <button id="thicknessBtn" class="btn btn-toggle">厚み：全体</button>
         </div>
         <div class="control-group">
             <button id="resetBtn" class="btn btn-primary">リセット</button>
         </div>
+
         <div class="legend">
             <div class="legend-item"><div class="dot" style="background: red;"></div> 極板正電荷 (+)</div>
             <div class="legend-item"><div class="dot" style="background: blue;"></div> 極板負電荷 (-)</div>
@@ -133,10 +138,10 @@
         const ctx = canvas.getContext('2d');
         const switchBtn = document.getElementById('switchBtn');
         const dielectricSlider = document.getElementById('dielectricSlider');
+        const thicknessBtn = document.getElementById('thicknessBtn');
         const resetBtn = document.getElementById('resetBtn');
         const statusText = document.getElementById('statusText');
 
-        // 定数
         const PLATE_WIDTH = 400;
         const PLATE_HEIGHT = 10;
         const PLATE_GAP = 100;
@@ -149,20 +154,20 @@
         const EPS_R = 2.0;
         const C0 = 1.0; 
 
-        // 状態
         let isSwitchOn = false;
-        let dielectricPos = 0; // 0 to 100 (%)
+        let isHalfThickness = false;
+        let dielectricPos = 0; 
         let Q = 0; 
         let targetQ = 0;
         let V = 0;
         let capacitance = C0;
-
         let isDragging = false;
 
         function updatePhysics() {
             const x = dielectricPos / 100;
-            capacitance = C0 * (1 + (EPS_R - 1) * x);
-
+            const t_ratio = isHalfThickness ? 0.5 : 1.0;
+            const c_diel_factor = 1 / ( (1 - t_ratio) + t_ratio / EPS_R );
+            capacitance = C0 * ( (1 - x) + c_diel_factor * x );
             if (isSwitchOn) {
                 V = BATTERY_V;
                 targetQ = capacitance * V;
@@ -170,16 +175,13 @@
             } else {
                 V = Q / (capacitance || 0.001);
             }
-
             statusText.innerText = `電圧: ${V.toFixed(2)}V | 電荷: ${Q.toFixed(2)}μC | 容量: ${capacitance.toFixed(2)}μF`;
         }
 
         function draw() {
             ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-            // 1. 回路の描画
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.moveTo(PLATE_X + PLATE_WIDTH/2, BOTTOM_PLATE_Y + PLATE_HEIGHT);
             ctx.lineTo(PLATE_X + PLATE_WIDTH/2, BOTTOM_PLATE_Y + 80);
@@ -188,10 +190,10 @@
             ctx.stroke();
 
             ctx.beginPath();
-            ctx.moveTo(PLATE_X - 120, (TOP_PLATE_Y + BOTTOM_PLATE_Y)/2 + 10);
-            ctx.lineTo(PLATE_X - 80, (TOP_PLATE_Y + BOTTOM_PLATE_Y)/2 + 10);
-            ctx.moveTo(PLATE_X - 110, (TOP_PLATE_Y + BOTTOM_PLATE_Y)/2 - 10);
-            ctx.lineTo(PLATE_X - 90, (TOP_PLATE_Y + BOTTOM_PLATE_Y)/2 - 10);
+            ctx.moveTo(PLATE_X - 120, (TOP_PLATE_Y + BOTTOM_PLATE_Y)/2 - 10);
+            ctx.lineTo(PLATE_X - 80, (TOP_PLATE_Y + BOTTOM_PLATE_Y)/2 - 10);
+            ctx.moveTo(PLATE_X - 110, (TOP_PLATE_Y + BOTTOM_PLATE_Y)/2 + 10);
+            ctx.lineTo(PLATE_X - 90, (TOP_PLATE_Y + BOTTOM_PLATE_Y)/2 + 10);
             ctx.stroke();
 
             ctx.beginPath();
@@ -200,20 +202,13 @@
             ctx.lineTo(PLATE_X + PLATE_WIDTH/2 - 50, TOP_PLATE_Y - 50);
             ctx.stroke();
 
-            ctx.beginPath();
-            ctx.arc(PLATE_X + PLATE_WIDTH/2 - 50, TOP_PLATE_Y - 50, 3, 0, Math.PI*2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(PLATE_X + PLATE_WIDTH/2, TOP_PLATE_Y - 50, 3, 0, Math.PI*2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(PLATE_X + PLATE_WIDTH/2 - 50, TOP_PLATE_Y - 50, 3, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(PLATE_X + PLATE_WIDTH/2, TOP_PLATE_Y - 50, 3, 0, Math.PI*2); ctx.fill();
             
             ctx.beginPath();
             ctx.moveTo(PLATE_X + PLATE_WIDTH/2 - 50, TOP_PLATE_Y - 50);
-            if (isSwitchOn) {
-                ctx.lineTo(PLATE_X + PLATE_WIDTH/2, TOP_PLATE_Y - 50);
-            } else {
-                ctx.lineTo(PLATE_X + PLATE_WIDTH/2 - 20, TOP_PLATE_Y - 80);
-            }
+            if (isSwitchOn) ctx.lineTo(PLATE_X + PLATE_WIDTH/2, TOP_PLATE_Y - 50);
+            else ctx.lineTo(PLATE_X + PLATE_WIDTH/2 - 20, TOP_PLATE_Y - 80);
             ctx.stroke();
 
             ctx.beginPath();
@@ -221,137 +216,108 @@
             ctx.lineTo(PLATE_X + PLATE_WIDTH/2, TOP_PLATE_Y);
             ctx.stroke();
 
-            // 2. 誘電体の描画
             const xFraction = dielectricPos / 100;
-            const dWidth = xFraction * PLATE_WIDTH;
-            const dX = PLATE_X + (PLATE_WIDTH - dWidth);
-            const vacWidth = PLATE_WIDTH - dWidth;
+            const dWidthFull = PLATE_WIDTH;
+            const dX = PLATE_X + (PLATE_WIDTH * (1 - xFraction));
+            const gapTotalHeight = PLATE_GAP - PLATE_HEIGHT;
+            const t_ratio = isHalfThickness ? 0.5 : 1.0;
+            const dHeight = gapTotalHeight * t_ratio;
+            const dY = TOP_PLATE_Y + PLATE_HEIGHT + (gapTotalHeight - dHeight) / 2;
             
             ctx.fillStyle = 'rgba(144, 238, 144, 0.4)';
-            ctx.fillRect(dX, TOP_PLATE_Y + PLATE_HEIGHT, dWidth, PLATE_GAP - PLATE_HEIGHT);
+            ctx.fillRect(dX, dY, dWidthFull, dHeight);
             ctx.strokeStyle = '#28a745';
             ctx.lineWidth = 2;
-            ctx.strokeRect(dX, TOP_PLATE_Y + PLATE_HEIGHT, dWidth, PLATE_GAP - PLATE_HEIGHT);
+            ctx.strokeRect(dX, dY, dWidthFull, dHeight);
 
-            // 3. 極板の描画
             ctx.fillStyle = '#666';
             ctx.fillRect(PLATE_X, TOP_PLATE_Y, PLATE_WIDTH, PLATE_HEIGHT);
             ctx.fillRect(PLATE_X, BOTTOM_PLATE_Y, PLATE_WIDTH, PLATE_HEIGHT);
 
-            // 4. 電荷の描画と分配
-            // 合計記号数 N_total (Qに比例)
             const N_total = Math.round(Q * 1.0);
-            
-            // 密度比 sigma_diel / sigma_vac = Er
-            // N_vac / vacWidth = (N_diel / dielWidth) / Er
-            const denom = (vacWidth + EPS_R * dWidth);
+            const visibleDWidth = xFraction * PLATE_WIDTH;
+            const vacWidth = PLATE_WIDTH - visibleDWidth;
+            const sigma_ratio = 1 / ( (1 - t_ratio) + t_ratio / EPS_R );
+            const denom = (vacWidth + sigma_ratio * visibleDWidth);
             const N_vac = denom > 0 ? Math.round(N_total * vacWidth / denom) : 0;
             const N_diel = N_total - N_vac;
 
-            // --- 真空領域の電荷描画 ---
             if (N_vac > 0) {
                 for (let i = 0; i < N_vac; i++) {
                     const cx = PLATE_X + (i + 0.5) * (vacWidth / N_vac);
-                    drawChargeAndLine(ctx, cx, true);
+                    drawChargeAndLine(ctx, cx, true, false, 0, 0);
                 }
             }
-
-            // --- 誘電体領域の電荷描画 ---
             if (N_diel > 0) {
                 for (let i = 0; i < N_diel; i++) {
-                    const cx = PLATE_X + vacWidth + (i + 0.5) * (dWidth / N_diel);
-                    // Er=2 の場合、1つおきに「突き抜ける線」を描画し、残りは分極電荷で対応
+                    const cx = PLATE_X + vacWidth + (i + 0.5) * (visibleDWidth / N_diel);
                     const isPassing = (i % 2 === 0);
-                    drawChargeAndLine(ctx, cx, isPassing);
+                    drawChargeAndLine(ctx, cx, isPassing, isHalfThickness, dY, dHeight);
                 }
             }
         }
 
-        function drawChargeAndLine(ctx, cx, isPassing) {
+        function drawChargeAndLine(ctx, cx, isPassing, isHalf, dY, dH) {
             ctx.font = 'bold 24px Arial';
-            // 極板電荷
-            ctx.fillStyle = 'red';
-            ctx.fillText('+', cx - 8, TOP_PLATE_Y - 10);
-            ctx.fillStyle = 'blue';
-            ctx.fillText('-', cx - 8, BOTTOM_PLATE_Y + PLATE_HEIGHT + 25);
-
-            if (isPassing) {
-                // 電気力線 (突き抜ける)
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = 'red';
-                drawArrow(ctx, cx, TOP_PLATE_Y + PLATE_HEIGHT, cx, BOTTOM_PLATE_Y, 8);
-            } else {
-                // 分極電荷
-                ctx.fillStyle = '#28a745';
-                ctx.font = 'bold 22px Arial';
-                ctx.fillText('-', cx - 6, TOP_PLATE_Y + PLATE_HEIGHT + 18);
-                ctx.fillText('+', cx - 8, BOTTOM_PLATE_Y - 3);
+            ctx.fillStyle = 'red'; ctx.fillText('+', cx - 8, TOP_PLATE_Y - 10);
+            ctx.fillStyle = 'blue'; ctx.fillText('-', cx - 8, BOTTOM_PLATE_Y + PLATE_HEIGHT + 25);
+            ctx.lineWidth = 2; ctx.strokeStyle = 'red';
+            if (isPassing) drawArrow(ctx, cx, TOP_PLATE_Y + PLATE_HEIGHT, cx, BOTTOM_PLATE_Y, 8);
+            else {
+                ctx.fillStyle = '#28a745'; ctx.font = 'bold 22px Arial';
+                ctx.fillText('-', cx - 6, dY + 18);
+                ctx.fillText('+', cx - 8, dY + dH - 3);
+                if (isHalf) {
+                    drawArrow(ctx, cx, TOP_PLATE_Y + PLATE_HEIGHT, cx, dY + 2, 5);
+                    drawArrow(ctx, cx, dY + dH, cx, BOTTOM_PLATE_Y, 5);
+                }
             }
         }
 
-        function drawArrow(ctx, fromx, fromy, tox, toy, headlen) {
-            const angle = Math.atan2(toy - fromy, tox - fromx);
-            ctx.beginPath();
-            ctx.moveTo(fromx, fromy);
-            ctx.lineTo(tox, toy);
-            ctx.stroke();
-            const headAngle = Math.PI / 6;
-            ctx.beginPath();
-            ctx.moveTo(tox, toy);
-            ctx.lineTo(tox - headlen * Math.cos(angle - headAngle), toy - headlen * Math.sin(angle - headAngle));
-            ctx.moveTo(tox, toy);
-            ctx.lineTo(tox - headlen * Math.cos(angle + headAngle), toy - headlen * Math.sin(angle + headAngle));
+        function drawArrow(ctx, fx, fy, tx, ty, hl) {
+            const angle = Math.atan2(ty - fy, tx - fx);
+            ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(tx, ty); ctx.stroke();
+            const ha = Math.PI / 6;
+            ctx.beginPath(); ctx.moveTo(tx, ty);
+            ctx.lineTo(tx - hl * Math.cos(angle - ha), ty - hl * Math.sin(angle - ha));
+            ctx.moveTo(tx, ty);
+            ctx.lineTo(tx - hl * Math.cos(angle + ha), ty - hl * Math.sin(angle + ha));
             ctx.stroke();
         }
 
         canvas.addEventListener('mousedown', (e) => {
             const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-            const xF = dielectricPos / 100;
-            const dW = xF * PLATE_WIDTH;
-            const dX = PLATE_X + (PLATE_WIDTH - dW);
-            if (mouseX >= dX - 20 && mouseX <= dX + dW + 20 && mouseY >= TOP_PLATE_Y && mouseY <= BOTTOM_PLATE_Y) {
-                isDragging = true;
-            }
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            const dx = PLATE_X + (PLATE_WIDTH * (1 - (dielectricPos / 100)));
+            if (mx >= dx && mx <= dx + PLATE_WIDTH && my >= TOP_PLATE_Y && my <= BOTTOM_PLATE_Y) isDragging = true;
         });
-
         window.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
             const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            let pos = ((PLATE_X + PLATE_WIDTH) - mouseX) / PLATE_WIDTH * 100;
-            pos = Math.max(0, Math.min(100, pos));
-            dielectricPos = pos;
-            dielectricSlider.value = pos;
+            let pos = ((PLATE_X + PLATE_WIDTH) - (e.clientX - rect.left)) / PLATE_WIDTH * 100;
+            dielectricPos = Math.max(0, Math.min(100, pos));
+            dielectricSlider.value = dielectricPos;
         });
-
-        window.addEventListener('mouseup', () => { isDragging = false; });
-
+        window.addEventListener('mouseup', () => isDragging = false);
         switchBtn.addEventListener('click', () => {
             isSwitchOn = !isSwitchOn;
             switchBtn.innerText = `スイッチ：${isSwitchOn ? 'ON' : 'OFF'}`;
             switchBtn.className = `btn ${isSwitchOn ? 'btn-primary' : 'btn-toggle'}`;
         });
-
-        dielectricSlider.addEventListener('input', (e) => {
-            dielectricPos = parseInt(e.target.value);
+        thicknessBtn.addEventListener('click', () => {
+            isHalfThickness = !isHalfThickness;
+            thicknessBtn.innerText = `厚み：${isHalfThickness ? '半分' : '全体'}`;
+            thicknessBtn.className = `btn ${isHalfThickness ? 'btn-primary' : 'btn-toggle'}`;
         });
-
+        dielectricSlider.addEventListener('input', (e) => { dielectricPos = parseInt(e.target.value); });
         resetBtn.addEventListener('click', () => {
-            isSwitchOn = false;
-            dielectricPos = 0;
-            Q = 0; targetQ = 0; V = 0;
-            switchBtn.innerText = 'スイッチ：OFF';
-            switchBtn.className = 'btn btn-toggle';
+            isSwitchOn = false; dielectricPos = 0; isHalfThickness = false; Q = 0; targetQ = 0; V = 0;
+            switchBtn.innerText = 'スイッチ：OFF'; switchBtn.className = 'btn btn-toggle';
+            thicknessBtn.innerText = '厚み：全体'; thicknessBtn.className = 'btn btn-toggle';
             dielectricSlider.value = 0;
         });
-
-        function loop() {
-            updatePhysics();
-            draw();
-            requestAnimationFrame(loop);
-        }
+        function loop() { updatePhysics(); draw(); requestAnimationFrame(loop); }
         loop();
     </script>
 </body>
