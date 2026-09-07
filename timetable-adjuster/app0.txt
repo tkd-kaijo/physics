@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>時間割調整アプリ ver2</title>
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#0b8fcf">
+  <style>
+    :root { color-scheme: light dark; font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif; }
+    body { margin:0; color:CanvasText; background:Canvas; } main { max-width:1020px; margin:0 auto; padding:28px 20px 48px; }
+    h1 { margin:0 0 8px; font-size:1.45rem; } h2 { margin:0; font-size:1.05rem; } h3 { margin:0; font-size:1rem; } p { margin:0; }
+    .lead,.hint { color:color-mix(in srgb,CanvasText 68%,Canvas); } .lead { margin-bottom:24px; }
+    .panel { border:1px solid color-mix(in srgb,CanvasText 20%,Canvas); border-radius:12px; padding:18px; margin-top:16px; }
+    .hidden { display:none; } .tabs { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; border-bottom:1px solid color-mix(in srgb,CanvasText 20%,Canvas); padding-bottom:12px; }
+    .tab { border:1px solid color-mix(in srgb,CanvasText 30%,Canvas); border-radius:999px; padding:8px 12px; color:inherit; background:Canvas; cursor:pointer; } .tab[aria-selected="true"] { background:Highlight; border-color:Highlight; color:HighlightText; }
+    .tab-panel { margin-top:16px; } .split { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; } .controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:12px; } .wide-controls { grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); }
+    label { display:grid; gap:6px; font-weight:600; } input,select,button { box-sizing:border-box; font:inherit; } input,select { width:100%; color:inherit; background:Canvas; border:1px solid color-mix(in srgb,CanvasText 30%,Canvas); border-radius:7px; padding:9px 10px; }
+    button { border:1px solid color-mix(in srgb,CanvasText 30%,Canvas); border-radius:7px; padding:9px 13px; color:inherit; background:color-mix(in srgb,CanvasText 8%,Canvas); cursor:pointer; } button.primary { background:Highlight; border-color:Highlight; color:HighlightText; } button:disabled { opacity:.55; cursor:not-allowed; }
+    input:focus,select:focus,button:focus { outline:3px solid Highlight; outline-offset:1px; } .status { margin-top:14px; min-height:1.5em; } .error { color:#b42318; }
+    .actions,.summary { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:16px; } .summary { gap:8px 14px; } .pill { display:inline-block; border-radius:999px; padding:3px 9px; background:color-mix(in srgb,Highlight 14%,Canvas); }
+    table { width:100%; border-collapse:collapse; margin-top:12px; } th,td { padding:10px 8px; border-bottom:1px solid color-mix(in srgb,CanvasText 16%,Canvas); text-align:left; vertical-align:top; } th { font-size:.9rem; color:color-mix(in srgb,CanvasText 68%,Canvas); }
+    .solution { margin-top:18px; padding-top:16px; border-top:1px solid color-mix(in srgb,CanvasText 20%,Canvas); } .remove { padding:5px 9px; font-size:.9rem; } dialog { color:CanvasText; background:Canvas; border:1px solid color-mix(in srgb,CanvasText 30%,Canvas); border-radius:12px; width:min(620px,calc(100% - 32px)); padding:20px; } dialog::backdrop { background:color-mix(in srgb,CanvasText 35%,transparent); }
+    @media (max-width:720px) { main { padding:20px 14px 36px; } .split { grid-template-columns:1fr; } .controls { grid-template-columns:1fr; } th:nth-child(3),td:nth-child(3) { display:none; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>時間割調整アプリ ver2</h1>
+    <p class="lead">時間割CSVを一度読み込み、調整したい内容に合わせてメニューを切り替えてください。</p>
+
+    <section class="panel" aria-labelledby="load-heading">
+      <h2 id="load-heading">時間割CSV</h2>
+      <p class="hint" style="margin-top:8px">「OneDrive→全職員共有→教務部→〇〇年度→〇〇年度時間割」の時間割のcsvまたはこのアプリで作成したcsvをインポートしてください。</p>
+      <label style="margin-top:12px">ファイルを選ぶ<input id="file-input" type="file" accept=".csv,text/csv"></label>
+      <p id="load-status" class="status" aria-live="polite">CSVを読み込むと各メニューを利用できます。</p>
+    </section>
+
+    <section id="app-panel" class="hidden" aria-label="調整メニュー">
+      <div class="tabs" role="tablist" aria-label="調整方法">
+        <button class="tab" id="tab-transfer" type="button" role="tab" aria-controls="panel-transfer" aria-selected="true">コマの譲渡</button>
+        <button class="tab" id="tab-cross" type="button" role="tab" aria-controls="panel-cross" aria-selected="false">コマの交換</button>
+        <button class="tab" id="tab-move" type="button" role="tab" aria-controls="panel-move" aria-selected="false">特定教員の既存コマと空きコマを交換</button>
+      </div>
+
+      <section id="panel-transfer" class="panel tab-panel" role="tabpanel" aria-labelledby="tab-transfer">
+        <h2>コマの譲渡</h2><p class="hint" style="margin-top:8px">指定した授業の担当を別の教員へ譲渡し、受け取る教員の重複を同じクラス・別の教員との交換で解消します。</p>
+        <div class="split" style="margin-top:14px">
+          <section><h3>譲渡する教員・授業コマ</h3><div class="controls"><label>教科<select id="transfer-giver-subject"><option value="all">すべて</option><option value="english">英語</option><option value="math">数学</option><option value="japanese">国語</option><option value="science">理科</option><option value="social">社会</option><option value="pe">体育</option><option value="arts-info">芸術・情報</option></select></label><label>担当教員<select id="transfer-giver-teacher"></select></label><label>曜日<select id="transfer-day"></select></label><label>時限<select id="transfer-period"></select></label></div></section>
+          <section><h3>受け取る教員</h3><div class="controls"><label>教科<select id="transfer-receiver-subject"><option value="all">すべて</option><option value="english">英語</option><option value="math">数学</option><option value="japanese">国語</option><option value="science">理科</option><option value="social">社会</option><option value="pe">体育</option><option value="arts-info">芸術・情報</option></select></label><label>担当教員<select id="transfer-receiver-teacher"></select></label></div></section>
+        </div>
+        <div id="transfer-summary" class="summary" aria-live="polite"></div><div class="actions"><button id="transfer-search" class="primary" type="button">譲渡案を探す</button></div><p id="transfer-message" class="status" aria-live="polite"></p>
+      </section>
+
+      <section id="panel-cross" class="panel tab-panel hidden" role="tabpanel" aria-labelledby="tab-cross">
+        <h2>コマの交換</h2><p class="hint" style="margin-top:8px">指定した2つの授業コマを交換し、発生する重複を同じクラス・別の教員との連鎖交換で解消します。</p>
+        <div class="split" style="margin-top:14px">
+          <section><h3>1つ目の授業コマ</h3><div class="controls"><label>教科<select id="cross-subject-a"><option value="all">すべて</option><option value="english">英語</option><option value="math">数学</option><option value="japanese">国語</option><option value="science">理科</option><option value="social">社会</option><option value="pe">体育</option><option value="arts-info">芸術・情報</option></select></label><label>担当教員<select id="cross-teacher-a"></select></label><label>曜日<select id="cross-day-a"></select></label><label>時限<select id="cross-period-a"></select></label></div></section>
+          <section><h3>2つ目の授業コマ</h3><div class="controls"><label>教科<select id="cross-subject-b"><option value="all">すべて</option><option value="english">英語</option><option value="math">数学</option><option value="japanese">国語</option><option value="science">理科</option><option value="social">社会</option><option value="pe">体育</option><option value="arts-info">芸術・情報</option></select></label><label>担当教員<select id="cross-teacher-b"></select></label><label>曜日<select id="cross-day-b"></select></label><label>時限<select id="cross-period-b"></select></label></div></section>
+        </div>
+        <div id="cross-summary" class="summary" aria-live="polite"></div><div class="actions"><button id="cross-search" class="primary" type="button">交換案を探す</button></div><p id="cross-message" class="status" aria-live="polite"></p>
+      </section>
+
+      <section id="panel-move" class="panel tab-panel hidden" role="tabpanel" aria-labelledby="tab-move">
+        <h2>特定教員の授業コマと空きコマの交換</h2><p class="hint" style="margin-top:8px">特定の教員の授業コマと空きコマを入れ替えるための調整方法を出力します。</p>
+        <div class="controls wide-controls"><label>教科<select id="move-subject"><option value="all">すべて</option><option value="english">英語</option><option value="math">数学</option><option value="japanese">国語</option><option value="science">理科</option><option value="social">社会</option><option value="pe">体育</option><option value="arts-info">芸術・情報</option></select></label><label>担当教員<select id="move-teacher"></select></label><label>授業コマの曜日<select id="move-source-day"></select></label><label>授業コマの時限<select id="move-source-period"></select></label><label>空きコマの曜日<select id="move-target-day"></select></label><label>空きコマの時限<select id="move-target-period"></select></label></div>
+        <div id="move-summary" class="summary" aria-live="polite"></div><div class="actions"><button id="move-search" class="primary" type="button">移動案を探す</button></div><p id="move-message" class="status" aria-live="polite"></p>
+      </section>
+
+      <section id="result-panel" class="panel hidden" aria-labelledby="result-heading"><h2 id="result-heading">調整案</h2><p id="result-status" class="status" aria-live="polite"></p><div id="solutions"></div></section>
+      <section id="final-panel" class="panel hidden" aria-labelledby="final-heading"><h2 id="final-heading">完成形を出力</h2><p class="hint" style="margin-top:8px">実行済みの譲渡・交換を反映したファイルを出力します。</p><p id="reference-status" class="status hint" aria-live="polite"></p><div class="actions"><button id="export-button" class="primary" type="button">完成形csvを出力</button><button id="teacher-pdf-button" type="button">完成版先生時間割pdf</button><button id="class-pdf-button" type="button">完成版クラス時間割pdf</button><button id="submission-button" type="button">教務部提出用ファイルを出力</button></div><p class="hint" style="margin-top:18px">完成形csvをさらに変更したcsvを出力しようとしている場合、以下に初期状態のcsvを入力してください。</p><label style="margin-top:12px">初期状態のcsvを入力（任意）<input id="baseline-file-input" type="file" accept=".csv,text/csv"></label><p id="baseline-status" class="status hint" aria-live="polite">入力しない場合は、現在の時間割CSVを比較基準にします。</p></section>
+      <section id="history-panel" class="panel hidden" aria-labelledby="history-heading"><h2 id="history-heading">これまでに行った譲渡・交換</h2><p id="history-status" class="status" aria-live="polite"></p><div id="history-steps"></div><div class="actions"><button id="undo-button" type="button">一手戻す</button></div></section>
+      <dialog id="submission-dialog" aria-labelledby="submission-dialog-heading"><form><h2 id="submission-dialog-heading">教務部提出用ファイルを出力</h2><p class="hint" style="margin-top:8px">提出用の情報を入力してください。</p><div class="controls wide-controls" style="margin-top:14px"><label>提出日<input id="submission-request-date" type="date"></label><label>最初の時間割変更日<input id="submission-date" type="date"></label><label>教務部長名（任意）<input id="submission-director" type="text" placeholder="例：海城太郎"></label><label>提出者名（任意）<input id="submission-submitter" type="text" placeholder="例：中村陽"></label></div><div class="actions"><button id="submission-cancel-button" type="button">キャンセル</button><button id="submission-confirm-button" class="primary" type="button">ファイルを出力</button></div></form></dialog>
+    </section>
+  </main>
+  <script>
+(() => {
+  'use strict';
+
+  const DAYS=['月','火','水','木','金','土'], PERIODS={月:6,火:6,水:6,木:6,金:6,土:4}, MAX_DEPTH=12, MAX_SOLUTIONS=12, MAX_STATES=800000, MAX_BRANCHES=150, SEARCH_LIMIT_MS=15000;
+  const $=id=>document.getElementById(id);
+  const fileInput=$('file-input'),baselineFileInput=$('baseline-file-input'),loadStatus=$('load-status'),baselineStatus=$('baseline-status'),referenceStatus=$('reference-status'),appPanel=$('app-panel'),resultPanel=$('result-panel'),resultStatus=$('result-status'),solutionsEl=$('solutions'),finalPanel=$('final-panel'),exportButton=$('export-button'),teacherPdfButton=$('teacher-pdf-button'),classPdfButton=$('class-pdf-button'),historyPanel=$('history-panel'),historyStatus=$('history-status'),historySteps=$('history-steps'),undoButton=$('undo-button');
+  const tabs={transfer:$('tab-transfer'),cross:$('tab-cross'),move:$('tab-move')};
+  const panels={transfer:$('panel-transfer'),cross:$('panel-cross'),move:$('panel-move')};
+  const transfer={giverSubject:$('transfer-giver-subject'),giverTeacher:$('transfer-giver-teacher'),day:$('transfer-day'),period:$('transfer-period'),receiverSubject:$('transfer-receiver-subject'),receiverTeacher:$('transfer-receiver-teacher'),summary:$('transfer-summary'),button:$('transfer-search'),message:$('transfer-message')};
+  const cross={subjectA:$('cross-subject-a'),teacherA:$('cross-teacher-a'),dayA:$('cross-day-a'),periodA:$('cross-period-a'),subjectB:$('cross-subject-b'),teacherB:$('cross-teacher-b'),dayB:$('cross-day-b'),periodB:$('cross-period-b'),summary:$('cross-summary'),button:$('cross-search'),message:$('cross-message')};
+  const move={subject:$('move-subject'),teacher:$('move-teacher'),sourceDay:$('move-source-day'),sourcePeriod:$('move-source-period'),targetDay:$('move-target-day'),targetPeriod:$('move-target-period'),summary:$('move-summary'),button:$('move-search'),message:$('move-message')};
+  let teachers=[],teacherByName=new Map(),teams=[],slots=[],slotsByClass=new Map(),slotByClassTime=new Map(),memberTeams=new Map(),fixedBusy=new Map(),currentState=null,history=[],undoStack=[],sourceRows=[],baselineReference=null,baselineFileName='';
+
+  const clean=value=>String(value??'').replace(/\u3000/g,' ').trim();
+  const normal=value=>clean(value).replace(/\s/g,'');
+  const timeKey=(day,period)=>`${day}-${period}`;
+  const timeLabel=(day,period)=>`${day}曜${period}限`;
+  const research=value=>clean(value).includes('研');
+  const reserve=value=>/^補欠/.test(clean(value));
+  const className=value=>{const match=normal(value).replace(/[０-９]/g,char=>String.fromCharCode(char.charCodeAt(0)-0xFEE0)).replace(/[－ー]/g,'-').match(/^([1-6])-([1-9])$/);return match?`${match[1]}年${match[2]}組`:'';};
+  const category=value=>{const subject=normal(value);if(/英|論理[・･]?表現|総合英語/.test(subject))return'english';if(/数/.test(subject))return'math';if(/国語|言語文化|現代|古典/.test(subject))return'japanese';if(/物生|物理|化学|生物|地学|理科/.test(subject))return'science';if(/地理|歴史|政治|経済|公民|社会/.test(subject))return'social';if(/体育|武道/.test(subject))return'pe';if(/音楽|美術|書道|情報|技術|家庭/.test(subject))return'arts-info';return'';};
+
+  function parseCsv(text){const rows=[];let row=[],cell='',quoted=false;for(let i=0;i<text.length;i+=1){const ch=text[i];if(quoted){if(ch==='"'&&text[i+1]==='"'){cell+='"';i+=1}else if(ch==='"')quoted=false;else cell+=ch}else if(ch==='"')quoted=true;else if(ch===','){row.push(cell);cell=''}else if(ch==='\n'){row.push(cell.replace(/\r$/,''));rows.push(row);row=[];cell=''}else cell+=ch}if(cell!==''||row.length){row.push(cell);rows.push(row)}return rows;}
+  function parseTimetable(text){const rows=parseCsv(text.replace(/^\uFEFF/,''));if(rows.length<4)throw new Error('時間割の行数が足りません。');const parsed=[];for(let i=2;i<rows.length-1;i+=2){const classRow=rows[i],subjectRow=rows[i+1],name=clean(classRow[0]);if(!name)continue;const cells={};DAYS.forEach((day,dayIndex)=>{for(let period=1;period<=PERIODS[day];period+=1){const column=1+dayIndex*6+period-1,course=clean(classRow[column]),subject=clean(subjectRow[column]);cells[timeKey(day,period)]={day,period,course,subject,classId:className(course)}}});const fullTime=Object.values(cells).some(cell=>research(cell.course)),workingDays={},workWindows={};DAYS.forEach(day=>{const dayCells=Array.from({length:PERIODS[day]},(_,index)=>cells[timeKey(day,index+1)]),researchDay=dayCells.some(cell=>research(cell.course)),periods=dayCells.filter(cell=>cell.course&&!research(cell.course)).map(cell=>cell.period);workingDays[day]=fullTime?!researchDay:periods.length>0;if(periods.length)workWindows[day]={first:Math.min(...periods),last:Math.max(...periods)};});const categories=[...new Set(Object.values(cells).map(cell=>category(cell.subject)).filter(Boolean))];parsed.push({name,cells,fullTime,workingDays,workWindows,categories,rowIndex:i})}if(!parsed.length)throw new Error('教員の時間割を読み取れませんでした。');return parsed;}
+
+  function createReference(referenceTeachers){const entries=new Map(),classTeams=new Map();referenceTeachers.forEach(teacher=>Object.values(teacher.cells).forEach(cell=>{const key=`${teacher.name}|${cell.day}-${cell.period}`,entry=cell.classId?{course:cell.course,subject:cell.subject,classId:cell.classId}:null;entries.set(key,entry);if(entry){const classKey=`${entry.classId}|${cell.day}-${cell.period}`;if(!classTeams.has(classKey))classTeams.set(classKey,[]);classTeams.get(classKey).push({name:teacher.name,subject:entry.subject});}}));return{entries,classTeams};}
+  function sourceE
