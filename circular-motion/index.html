@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f3f5f8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>&#20870;&#36939;&#21205;&#12392;&#21336;&#25391;&#21205;</title>
+<style>
+:root{color-scheme:light;--bg:#f3f5f8;--paper:#fff;--ink:#202a3b;--muted:#697487;--line:#e3e8ef;--blue:#1664dc;--red:#da3448;--radius:18px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink)}body{overscroll-behavior:none}button,input{font:inherit}button{cursor:pointer;-webkit-tap-highlight-color:transparent}button:focus-visible,input:focus-visible,.scene:focus-visible{outline:3px solid #8ca9d3;outline-offset:4px}button:disabled{cursor:default;opacity:.35}button svg{width:20px;height:20px;flex:none}button{touch-action:manipulation}.app{width:100%;max-width:1500px;height:100vh;height:100dvh;min-height:540px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:12px}.topbar,.settings,.stage{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius)}.topbar{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px;padding:10px 12px}.display-modes{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}.mode-btn{min-height:36px;padding:0 11px;border:1px solid var(--line);border-radius:9px;background:#f7f9fc;color:#536176;font-size:13px;font-weight:700}.mode-btn[aria-pressed="true"]{background:#e7edf5;border-color:#aebdd1;color:#263953}.transport,.vector-controls{display:flex;align-items:center;gap:8px}.vector-controls{justify-content:flex-end;gap:14px;flex-wrap:wrap}.btn{min-height:42px;display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);border-radius:11px;background:var(--paper);padding:0 13px;font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;transition:background .15s,box-shadow .15s}.btn:hover{background:#f6f8fb}.btn:active{transform:translateY(1px)}.btn.primary{background:var(--ink);border-color:var(--ink);color:white;min-width:112px}.btn.primary:hover{background:#35415a}.btn.icon-only{padding:0;width:42px}.btn[aria-pressed="true"]:not(.primary){background:#edf2fa;border-color:#bccbe0}.slow-number{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}.switch{position:relative;display:inline-flex;align-items:center;gap:8px;min-height:42px;font-size:15px;font-weight:650;white-space:nowrap;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}.switch input{position:absolute;width:1px;height:1px;opacity:0}.switch .track{width:36px;height:22px;border-radius:20px;background:#cdd4de;position:relative;flex:none;transition:background .18s}.switch .track:after{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;border-radius:50%;background:white;box-shadow:0 1px 3px #1b294422;transition:transform .18s}.switch input:checked+.track{background:var(--switch-color,#7b8797)}.switch input:checked+.track:after{transform:translateX(14px)}.switch input:focus-visible+.track{outline:3px solid #8ca9d3;outline-offset:4px}.switch.velocity{--switch-color:var(--blue);color:var(--blue)}.switch.acceleration{--switch-color:var(--red);color:var(--red)}.switch.component{font-size:14px}.switch.projection{--switch-color:#66738a;color:var(--muted)}.stage{position:relative;flex:1;min-height:280px;overflow:hidden;box-shadow:0 3px 18px #24365704}.scene{display:block;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none}.scene text{font-family:inherit;pointer-events:none}.scene .math{font-family:"Cambria Math",Cambria,Georgia,serif;font-style:italic}.scene .math-label{paint-order:stroke fill;stroke:#fff;stroke-width:5px;stroke-linejoin:round}.scene .section-label{fill:#586578;font-weight:600;letter-spacing:.04em}.scene .axis{stroke:#a6b0be;stroke-width:1.6;fill:none;stroke-linecap:round}.scene .axis-label{fill:#6e7a8b}.scene .orbit{stroke:#aeb8c6;stroke-width:2.3;fill:none}.scene .projection-line{stroke:#8896ab;stroke-width:1.8;stroke-dasharray:5 7;stroke-linecap:round;opacity:.65}.scene .particle{fill:#25324a;stroke:#fff;stroke-width:3;cursor:grab}.scene.dragging .particle,.scene.dragging{cursor:grabbing}.scene .radius{stroke:#bdc6d2;stroke-width:1.5}.scene .vector-stem{stroke-width:1.6;stroke-dasharray:3 4;opacity:.36}.settings{padding:13px 18px 11px}.adjustments{display:grid;grid-template-columns:1fr 1fr;gap:30px}.control{display:grid;grid-template-columns:auto 1fr 62px;align-items:center;gap:12px}.control label{font-size:14px;color:#59667a;font-weight:600;min-width:32px}.control output{font-size:15px;font-weight:650;text-align:right;font-variant-numeric:tabular-nums}.slider{width:100%;min-width:0;cursor:pointer;accent-color:#45566f;touch-action:pan-y}.slider{-webkit-appearance:none;appearance:none;height:26px;margin:0;background:transparent}.slider::-webkit-slider-runnable-track{height:5px;border-radius:10px;background:#dde4ed}.slider::-moz-range-track{height:5px;border-radius:10px;background:#dde4ed}.slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#43536d;margin-top:-6.5px;border:3px solid #fff;box-shadow:0 0 0 1px #9aabc1}.slider::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:#43536d;border:3px solid #fff;box-shadow:0 0 0 1px #9aabc1}.footerline{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:8px}.hint{font-size:11px;color:#909baa;line-height:1.5}.presets{display:flex;gap:6px;align-items:center}.presets button{background:#f7f9fc;color:#627086;border:1px solid #e6ebf2;border-radius:7px;min-height:28px;padding:2px 12px;font-size:12px;font-variant-numeric:tabular-nums}.presets button:hover{background:#eaf0f8}.presets button.active{background:#e7edf5;border-color:#b8c6d9;color:#243854}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.app:fullscreen{max-width:none;background:var(--bg);padding:16px;width:100vw;height:100vh}.app:-webkit-full-screen{max-width:none;background:var(--bg);padding:16px;width:100vw;height:100vh}
+@media(min-width:1600px){.app{padding:22px;gap:15px}.topbar{padding:12px 16px}.settings{padding:16px 20px}.btn{font-size:16px;min-height:46px}.btn.icon-only{width:46px}.switch{font-size:17px;gap:10px}.vector-controls{gap:28px}}
+@media(max-width:760px){.app{padding:10px;gap:9px}.topbar{grid-template-columns:1fr auto;gap:6px 10px;padding:8px 10px}.display-modes{grid-column:1 / -1;grid-row:2}.mode-btn{min-height:34px;font-size:12px;padding:0 9px}.vector-controls{grid-column:1 / -1;grid-row:3;justify-content:space-around;gap:10px;border-top:1px solid #eef1f5;padding-top:3px}.fullscreen{grid-column:2;grid-row:1}.transport{gap:6px}.btn{padding:0 11px;min-height:39px}.btn.primary{min-width:109px}.btn.icon-only{min-height:39px;width:39px}.switch{font-size:14px;min-height:34px;gap:6px}.switch .track{width:32px;height:20px}.switch .track:after{width:14px;height:14px}.switch input:checked+.track:after{transform:translateX(12px)}.settings{padding:10px 13px}.adjustments{grid-template-columns:1fr;gap:7px}.control{gap:13px}.footerline{margin-top:7px;justify-content:flex-end}.hint{display:none}.presets{gap:7px}.presets button{min-height:28px;min-width:47px}.stage{border-radius:16px}}
+@media(max-width:420px){.reset-text{display:none}#reset{width:39px;padding:0}}
+@media(max-width:370px){.reset-text{display:none}.switch{gap:5px;font-size:13px}.vector-controls{gap:4px}.slow-text{display:none}.btn.primary{min-width:102px}.app{padding:8px;gap:7px}}
+@media(max-height:650px) and (min-width:761px){.app{padding:8px;gap:6px;min-height:480px}.topbar{padding:5px 10px}.settings{padding:7px 13px}.footerline{margin-top:3px}.btn{min-height:36px}.switch{min-height:36px}.stage{min-height:280px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="transport">
+      <button class="btn primary" id="play" type="button" aria-label="&#19968;&#26178;&#20572;&#27490;" title="Space: &#20877;&#29983; / &#19968;&#26178;&#20572;&#27490;">
+        <svg id="playIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" fill="none" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/></svg>
+        <span id="playText">&#19968;&#26178;&#20572;&#27490;</span>
+      </button>
+      <button class="btn" id="reset" type="button" title="&#20301;&#30456;&#12434;0&#176;&#12395;&#25147;&#12375;&#12390;&#20572;&#27490; (R)" aria-label="&#12522;&#12475;&#12483;&#12488;">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 10a7.8 7.8 0 1 1 .4 6M4 4v6h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="reset-text">&#12522;&#12475;&#12483;&#12488;</span>
+      </button>
+      <button class="btn" id="slow" type="button" aria-pressed="false" title="&#29289;&#29702;&#30340;&#12394;&#21608;&#26399;&#12420;&#30690;&#21360;&#12398;&#38263;&#12373;&#12399;&#22793;&#12360;&#12378;&#12289;1/4&#20493;&#36895;&#12391;&#20877;&#29983;">
+        <span class="slow-number">1/4</span><span class="slow-text">&#12473;&#12525;&#12540;</span>
+      </button>
+    </div>
+    <div class="display-modes" aria-label="表示モード">
+      <button class="mode-btn" type="button" data-mode="both" aria-pressed="true">両方</button>
+      <button class="mode-btn" type="button" data-mode="circle" aria-pressed="false">円運動だけ</button>
+      <button class="mode-btn" type="button" data-mode="shm" aria-pressed="false">単振動だけ</button>
+    </div>
+    <div class="vector-controls" aria-label="&#34920;&#31034;&#20999;&#12426;&#26367;&#12360;">
+      <label class="switch velocity"><input id="velocityToggle" type="checkbox" role="switch" checked><span class="track" aria-hidden="true"></span><span>&#36895;&#24230;</span></label>
+      <label class="switch acceleration"><input id="accelerationToggle" type="checkbox" role="switch" checked><span class="track" aria-hidden="true"></span><span>&#21152;&#36895;&#24230;</span></label>
+      <label class="switch velocity component"><input id="velocityXToggle" type="checkbox" role="switch"><span class="track" aria-hidden="true"></span><span>速度のx成分</span></label>
+      <label class="switch acceleration component"><input id="accelerationXToggle" type="checkbox" role="switch"><span class="track" aria-hidden="true"></span><span>加速度のx成分</span></label>
+      <label class="switch projection"><input id="projectionToggle" type="checkbox" role="switch" checked><span class="track" aria-hidden="true"></span><span>&#25237;&#24433;&#32218;</span></label>
+    </div>
+    <button class="btn icon-only fullscreen" id="fullscreen" type="button" aria-label="&#20840;&#30011;&#38754;" title="&#20840;&#30011;&#38754;">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4m12-4h4v4M4 16v4h4m12-4v4h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </header>
+
+  <main class="stage" id="stage">
+    <svg class="scene" id="scene" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 650" role="img" aria-labelledby="sceneTitle sceneDesc">
+      <title id="sceneTitle">&#31561;&#36895;&#20870;&#36939;&#21205;&#12392;&#21336;&#25391;&#21205;</title>
+      <desc id="sceneDesc">&#19978;&#27573;&#12398;&#20870;&#36939;&#21205;&#12398;x&#24231;&#27161;&#12434;&#19979;&#27573;&#12395;&#25237;&#24433;&#12375;&#12414;&#12377;&#12290;&#38738;&#12399;&#36895;&#24230;&#12289;&#36196;&#12399;&#21152;&#36895;&#24230;&#12290;&#19979;&#27573;&#12398;&#30690;&#21360;&#12399;&#12381;&#12428;&#12382;&#12428;&#12398;x&#25104;&#20998;&#12391;&#12377;&#12290;</desc>
+      <g id="circleScene">
+        <text class="section-label" id="circleTitle">&#31561;&#36895;&#20870;&#36939;&#21205;</text>
+        <circle class="orbit" id="orbit"/>
+        <path class="axis" id="circleXAxis"/>
+        <path class="axis" id="circleYAxis"/>
+        <text class="math axis-label" id="circleXLabel">x</text>
+        <text class="math axis-label" id="circleYLabel">y</text>
+        <text class="math axis-label math-label" id="originLabel">O</text>
+        <line class="radius" id="radiusLine"/>
+        <circle id="centerDot" fill="#93a0b3" r="3"/>
+        <g id="circleVelocityGroup">
+          <g id="circularVelocity"><path/><polygon/><text class="math math-label">v</text></g>
+          <g id="circularVelocityX"><path/><polygon/><text class="math math-label">v<tspan baseline-shift="sub" font-size="70%">x</tspan></text></g>
+        </g>
+        <g id="circleAccelerationGroup">
+          <g id="circularAcceleration"><path/><polygon/><text class="math math-label">a</text></g>
+          <g id="circularAccelerationX"><path/><polygon/><text class="math math-label">a<tspan baseline-shift="sub" font-size="70%">x</tspan></text></g>
+        </g>
+        <circle class="particle" id="circleParticle"/>
+      </g>
+      <g id="shmScene">
+        <text class="section-label" id="shmTitle">&#21336;&#25391;&#21205;</text>
+        <path class="axis" id="shmAxis"/>
+        <text class="math axis-label" id="shmXLabel">x</text>
+        <path class="axis" id="shmTicks"/>
+        <text class="math axis-label" id="minusLabel" text-anchor="middle">&#8722;A</text>
+        <text class="axis-label" id="zeroLabel" text-anchor="middle">0</text>
+        <text class="math axis-label" id="plusLabel" text-anchor="middle">A</text>
+        <g id="velocityGroup">
+          <line class="vector-stem" id="velocityStem" stroke="#1664dc"/>
+          <g id="shmVelocity"><path/><polygon/><text class="math math-label">v<tspan baseline-shift="sub" font-size="70%">x</tspan></text></g>
+        </g>
+        <g id="accelerationGroup">
+          <line class="vector-stem" id="accelerationStem" stroke="#da3448"/>
+          <g id="shmAcceleration"><path/><polygon/><text class="math math-label">a<tspan baseline-shift="sub" font-size="70%">x</tspan></text></g>
+        </g>
+        <circle class="particle" id="shmParticle"/>
+      </g>
+      <g id="projectionGroup">
+        <line class="projection-line" id="projectionLine"/>
+        <circle id="axisProjection" fill="#fff" stroke="#94a1b4" stroke-width="1.6" r="4"/>
+      </g>
+    </svg>
+  </main>
+
+  <footer class="settings">
+    <div class="adjustments">
+      <div class="control">
+        <label for="period">&#21608;&#26399;</label>
+        <input class="slider" id="period" type="range" min="4" max="12" step="0.1" value="6" aria-label="&#21608;&#26399; T (&#31186;)">
+        <output for="period" id="periodValue">6.0 s</output>
+      </div>
+      <div class="control">
+        <label for="phase">&#20301;&#30456;</label>
+        <input class="slider" id="phase" type="range" min="0" max="360" step="1" value="40" aria-label="&#20301;&#30456; (&#24230;)">
+        <output for="phase" id="phaseValue">40&#176;</output>
+      </div>
+    </div>
+    <div class="footerline">
+      <span class="hint">&#28857;&#12434;&#12489;&#12521;&#12483;&#12464;&#12375;&#12390;&#30906;&#35469;&#12288;&#183;&#12288;Space&#12461;&#12540;&#12391;&#20877;&#29983; / &#20572;&#27490;</span>
+      <div class="presets" aria-label="&#20301;&#30456;&#12434;&#25351;&#23450;&#12375;&#12390;&#20572;&#27490;">
+        <button type="button" data-phase="0">0&#176;</button>
+        <button type="button" data-phase="90">90&#176;</button>
+        <button type="button" data-phase="180">180&#176;</button>
+        <button type="button" data-phase="270">270&#176;</button>
+      </div>
+    </div>
+  </footer>
+  <p class="sr-only" id="status" role="status" aria-live="polite"></p>
+</div>
+<script>
+(() => {
+  'use strict';
+  const TAU = Math.PI * 2;
+  const MIN_PERIOD = 4;
+  const $ = id => document.getElementById(id);
+  const ui = Object.fromEntries([
+    'app','stage','scene','play','playIcon','playText','reset','slow','fullscreen',
+    'velocityToggle','accelerationToggle','velocityXToggle','accelerationXToggle','projectionToggle','period','periodValue',
+    'phase','phaseValue','status','circleScene','shmScene','circleTitle','shmTitle','orbit','circleXAxis',
+    'circleYAxis','circleXLabel','circleYLabel','originLabel','shmAxis','shmXLabel',
+    'shmTicks','minusLabel','zeroLabel','plusLabel','projectionGroup','projectionLine',
+    'axisProjection','radiusLine','centerDot','circleVelocityGroup','circleAccelerationGroup','velocityGroup','accelerationGroup',
+    'velocityStem','accelerationStem','circularVelocity','circularVelocityX','shmVelocity',
+    'circularAcceleration','circularAccelerationX','shmAcceleration','circleParticle','shmParticle'
+  ].map(id => [id, $(id)]));
+  const initialReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const state = { theta: 40 * Math.PI / 180, period: 6, playing: !initialReducedMotion, slow: false, mode: 'both' };
+  let layout = null;
+  let lastTime = null;
+  let dragMode = null;
+  let activePointer = null;
+  let dragUpperHalf = true;
+  let lastUiTime = -Infinity;
+  const presets = [...document.querySelectorAll('[data-phase]')];
+  const modeButtons = [...document.querySelectorAll('[data-mode]')];
+  const vectorColors = { velocity: '#1664dc', acceleration: '#da3448' };
+  const vectors = new Map();
+  for (const [id, kind, lower] of [
+    ['circularVelocity','velocity',false], ['circularVelocityX','velocity',true], ['shmVelocity','velocity',true],
+    ['circularAcceleration','acceleration',false], ['circularAccelerationX','acceleration',true], ['shmAcceleration','acceleration',true]
+  ]) {
+    const group = ui[id];
+    const [shaft, head, label] = group.children;
+    shaft.setAttribute('fill','none');
+    shaft.setAttribute('stroke',vectorColors[kind]);
+    shaft.setAttribute('stroke-linecap','round');
+    head.setAttribute('fill',vectorColors[kind]);
+    label.setAttribute('fill',vectorColors[kind]);
+    vectors.set(id,{group,shaft,head,label,kind,lower});
+  }
+  const attrs = (node, values) => { for (const [key, value] of Object.entries(values)) node.setAttribute(key, String(value)); };
+  const clamp = (value, low, high) => Math.min(high, Math.max(low, value));
+  const wrap = theta => ((theta % TAU) + TAU) % TAU;
+  const clean = value => Math.abs(value) < 1e-12 ? 0 : value;
+  const mathLabel = (kind, lower, zero) => `${kind === 'velocity' ? 'v' : 'a'}${lower ? '<tspan baseline-shift="sub" font-size="70%">x</tspan>' : ''}${zero ? '<tspan font-style="normal"> = 0</tspan>' : ''}`;
+
+  function horizontalAxis(x1, x2, y, head = 7) {
+    return `M ${x1} ${y} H ${x2} M ${x2-head} ${y-head*.55} L ${x2} ${y} L ${x2-head} ${y+head*.55}`;
+  }
+
+  function resize() {
+    const width = Math.max(240, ui.stage.clientWidth);
+    const height = Math.max(280, ui.stage.clientHeight);
+    const compact = width < 620;
+    const both = state.mode === 'both';
+    const circleOnly = state.mode === 'circle';
+    let radius, cx = width/2, cy, sy;
+    if (both) {
+      const top = compact ? 34 : 32;
+      const bottom = compact ? 79 : 83;
+      const separation = compact ? 58 : 69;
+      radius = Math.max(37, Math.min(width * .315, (height - bottom - top - separation) / 2.64));
+      cy = top + radius * 1.32;
+      sy = height - bottom;
+    } else if (circleOnly) {
+      radius = Math.max(55, Math.min(width*.34, height*.34));
+      cy = height*.50;
+      sy = height*.82;
+    } else {
+      radius = Math.max(55, Math.min(width*.33, height*.28));
+      cy = height*.28;
+      sy = height*.52;
+    }
+    const dot = clamp(radius*.054, 6.5, 11);
+    const font = clamp(radius*.12, 17, 24);
+    const lane = clamp(radius*.24, 29, 43);
+    layout = { width, height, radius, cx, cy, sy, dot, font, lane, compact };
+    attrs(ui.scene,{viewBox:`0 0 ${width} ${height}`});
+    attrs(ui.orbit,{cx,cy,r:radius});
+    const left = Math.max(20,cx-radius-29), right = Math.min(width-32,cx+radius+36);
+    attrs(ui.circleXAxis,{d:horizontalAxis(left,right,cy)});
+    const ytop = cy-radius-22, ybottom = cy+radius+18;
+    attrs(ui.circleYAxis,{d:`M ${cx} ${ybottom} V ${ytop} M ${cx-4} ${ytop+7} L ${cx} ${ytop} L ${cx+4} ${ytop+7}`});
+    attrs(ui.circleXLabel,{x:right+11,y:cy+6,'font-size':font});
+    attrs(ui.circleYLabel,{x:cx+11,y:ytop+5,'font-size':font});
+    attrs(ui.originLabel,{x:cx-17,y:cy+21,'font-size':font*.9});
+    const lowerLeft = Math.max(21,cx-radius-45), lowerRight = Math.min(width-31,cx+radius+58);
+    attrs(ui.shmAxis,{d:horizontalAxis(lowerLeft,lowerRight,sy,8)});
+    attrs(ui.shmXLabel,{x:lowerRight+11,y:sy+6,'font-size':font});
+    attrs(ui.shmTicks,{d:[cx-radius,cx,cx+radius].map(x=>`M ${x} ${sy-5} V ${sy+5}`).join(' ')});
+    [ui.minusLabel,ui.zeroLabel,ui.plusLabel].forEach((node,index)=>attrs(node,{x:cx+(index-1)*radius,y:sy+23,'font-size':font*.82}));
+    attrs(ui.centerDot,{cx,cy});
+    attrs(ui.radiusLine,{x1:cx,y1:cy});
+    attrs(ui.circleTitle,{x:compact?16:22,y:circleOnly?28:28,'font-size':compact?13:15});
+    attrs(ui.shmTitle,{x:compact?16:22,y:state.mode==='shm'?Math.max(28,sy-lane-70):sy-lane-28,'font-size':compact?13:15});
+    attrs(ui.circleParticle,{r:dot});
+    attrs(ui.shmParticle,{r:dot});
+    for (const vector of vectors.values()) {
+      attrs(vector.shaft,{'stroke-width':clamp(radius*.025,3.2,5)});
+      attrs(vector.label,{'font-size':font});
+    }
+    render();
+  }
+
+  function drawVector(id, x, y, dx, dy) {
+    const v = vectors.get(id), {radius,width,height,font} = layout;
+    dx = clean(dx); dy = clean(dy);
+    const length = Math.hypot(dx,dy);
+    const isZero = length < 1e-8;
+    attrs(v.group,{'data-x1':x,'data-y1':y,'data-dx':dx,'data-dy':dy,'data-x2':x+dx,'data-y2':y+dy});
+    v.shaft.style.display = isZero ? 'none' : '';
+    v.head.style.display = isZero ? 'none' : '';
+    const labelKey = `${v.kind}/${v.lower}/${isZero}`;
+    if (v.label.dataset.labelKey !== labelKey) {
+      v.label.innerHTML = mathLabel(v.kind,v.lower,isZero);
+      v.label.dataset.labelKey = labelKey;
+    }
+    let tx, ty;
+    if (!isZero) {
+      const ux=dx/length,uy=dy/length;
+      const headLength=Math.min(clamp(radius*.072,10,15),length*.72);
+      const headWidth=headLength*.48;
+      const ex=x+dx,ey=y+dy,bx=ex-headLength*ux,by=ey-headLength*uy;
+      attrs(v.shaft,{d:`M ${x} ${y} L ${bx+ux*.8} ${by+uy*.8}`});
+      attrs(v.head,{points:`${ex},${ey} ${bx-uy*headWidth},${by+ux*headWidth} ${bx+uy*headWidth},${by-ux*headWidth}`});
+      if(v.lower){
+        tx=x+dx*.5; ty=y+(v.kind==='velocity'?-12:font+2);
+      }else{
+        const offset=font*.7;
+        const side=v.kind==='velocity'?1:-1;
+        tx=x+dx*.56-uy*offset*side;
+        ty=y+dy*.56+ux*offset*side+font*.3;
+      }
+    }else{
+      tx=x+font*.7; ty=y+(v.kind==='velocity'?-12:font+2);
+    }
+    const edgePad=isZero?font*1.9:font*.7;
+    attrs(v.label,{x:clamp(tx,edgePad,width-edgePad),y:clamp(ty,font+5,height-12),'text-anchor':'middle'});
+  }
+
+  function render() {
+    if (!layout) return;
+    const {radius,cx,cy,sy,lane,dot}=layout;
+    const cosine=clean(Math.cos(state.theta)),sine=clean(Math.sin(state.theta));
+    const x=cx+radius*cosine,y=cy-radius*sine;
+    const velocityLength=.90*radius*(MIN_PERIOD/state.period);
+    const accelerationLength=.94*radius*(MIN_PERIOD/state.period)**2;
+    attrs(ui.circleParticle,{cx:x,cy:y});
+    attrs(ui.shmParticle,{cx:x,cy:sy});
+    attrs(ui.radiusLine,{x2:x,y2:y});
+    attrs(ui.projectionLine,{x1:x,y1:Math.min(y,cy),x2:x,y2:sy});
+    attrs(ui.axisProjection,{cx:x,cy});
+    attrs(ui.velocityStem,{x1:x,y1:sy-dot-2,x2:x,y2:sy-lane});
+    attrs(ui.accelerationStem,{x1:x,y1:sy+dot+2,x2:x,y2:sy+lane});
+    drawVector('circularVelocity',x,y,-velocityLength*sine,-velocityLength*cosine);
+    drawVector('circularVelocityX',x,y,-velocityLength*sine,0);
+    drawVector('circularAcceleration',x,y,-accelerationLength*cosine,accelerationLength*sine);
+    drawVector('circularAccelerationX',x,y,-accelerationLength*cosine,0);
+    drawVector('shmVelocity',x,sy-lane,-velocityLength*sine,0);
+    drawVector('shmAcceleration',x,sy+lane,-accelerationLength*cosine,0);
+    ui.circleScene.style.display=state.mode==='shm'?'none':'';
+    ui.shmScene.style.display=state.mode==='circle'?'none':'';
+    ui.circularVelocity.style.display=ui.velocityToggle.checked?'':'none';
+    ui.circularAcceleration.style.display=ui.accelerationToggle.checked?'':'none';
+    ui.circularVelocityX.style.display=ui.velocityXToggle.checked?'':'none';
+    ui.circularAccelerationX.style.display=ui.accelerationXToggle.checked?'':'none';
+    ui.velocityGroup.style.display=ui.velocityToggle.checked?'':'none';
+    ui.accelerationGroup.style.display=ui.accelerationToggle.checked?'':'none';
+    ui.projectionGroup.style.display=(state.mode==='both'&&ui.projectionToggle.checked)?'':'none';
+    ui.projectionToggle.closest('label').style.display=state.mode==='both'?'':'none';
+  }
+
+  function syncPhaseControl() {
+    const degrees=state.theta*180/Math.PI;
+    const rounded=Math.round(degrees)%360;
+    ui.phase.value=String(rounded);
+    ui.phaseValue.value=`${rounded}\u00b0`;
+    ui.phase.setAttribute('aria-valuetext',`${rounded}\u5ea6`);
+    presets.forEach(button=>button.classList.toggle('active',!state.playing&&Math.abs(degrees-Number(button.dataset.phase))<.01));
+  }
+
+  function setPlaying(playing) {
+    state.playing=playing;
+    lastTime=null;
+    const label=playing?'\u4e00\u6642\u505c\u6b62':'\u518d\u751f';
+    ui.playText.textContent=label;
+    ui.play.setAttribute('aria-label',label);
+    ui.playIcon.innerHTML=playing
+      ?'<path d="M8 5v14M16 5v14" fill="none" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/>'
+      :'<path d="M8 4.5 19 12 8 19.5Z" fill="currentColor"/>';
+    syncPhaseControl();
+  }
+  function setPhase(degrees) {
+    setPlaying(false);
+    state.theta=wrap(Number(degrees)*Math.PI/180);
+    render();syncPhaseControl();
+  }
+  function togglePlay(){setPlaying(!state.playing);}
+  ui.play.addEventListener('click',togglePlay);
+  ui.reset.addEventListener('click',()=>setPhase(0));
+  ui.slow.addEventListener('click',()=>{
+    state.slow=!state.slow;
+    ui.slow.setAttribute('aria-pressed',String(state.slow));
+  });
+  for (const node of [ui.velocityToggle,ui.accelerationToggle,ui.velocityXToggle,ui.accelerationXToggle,ui.projectionToggle]) node.addEventListener('change',render);
+  modeButtons.forEach(button=>button.addEventListener('click',()=>{
+    state.mode=button.dataset.mode;
+    modeButtons.forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+    resize();
+  }));
+  ui.period.addEventListener('input',()=>{
+    const period=Number(ui.period.value);
+    if(Number.isFinite(period)&&period>=4&&period<=12){
+      state.period=period;ui.periodValue.value=`${period.toFixed(1)} s`;
+      ui.period.setAttribute('aria-valuetext',`${period.toFixed(1)}\u79d2`);render();
+    }
+  });
+  ui.phase.addEventListener('input',()=>setPhase(ui.phase.value));
+  presets.forEach(button=>button.addEventListener('click',()=>setPhase(button.dataset.phase)));
+
+  function pointFromEvent(event){
+    const box=ui.scene.getBoundingClientRect();
+    return {x:(event.clientX-box.left)*layout.width/box.width,y:(event.clientY-box.top)*layout.height/box.height};
+  }
+  function updateDrag(event){
+    const p=pointFromEvent(event),{cx,cy,radius}=layout;
+    if(dragMode==='circle'){
+      if(Math.hypot(p.x-cx,p.y-cy)<radius*.12)return;
+      state.theta=wrap(Math.atan2(cy-p.y,p.x-cx));
+    }else if(dragMode==='shm'){
+      const angle=Math.acos(clamp((p.x-cx)/radius,-1,1));
+      state.theta=dragUpperHalf?angle:wrap(TAU-angle);
+    }
+    render();syncPhaseControl();
+  }
+  ui.scene.addEventListener('pointerdown',event=>{
+    if(!layout||event.button!==0||activePointer!==null)return;
+    const p=pointFromEvent(event),{cx,cy,sy,radius,dot}=layout;
+    const px=cx+radius*Math.cos(state.theta),py=cy-radius*Math.sin(state.theta);
+    const nearPoint=Math.hypot(p.x-px,p.y-py)<Math.max(25,dot*2.5);
+    const nearCircle=Math.abs(Math.hypot(p.x-cx,p.y-cy)-radius)<Math.max(18,radius*.14);
+    const nearSHM=Math.abs(p.y-sy)<25&&Math.abs(p.x-cx)<radius+20;
+    if(!nearPoint&&!nearCircle&&!nearSHM)return;
+    dragMode=(nearPoint||nearCircle)?'circle':'shm';
+    dragUpperHalf=Math.sin(state.theta)>=0;
+    activePointer=event.pointerId;
+    setPlaying(false);
+    ui.scene.classList.add('dragging');
+    ui.scene.setPointerCapture(event.pointerId);
+    updateDrag(event);event.preventDefault();
+  });
+  ui.scene.addEventListener('pointermove',event=>{
+    if(event.pointerId===activePointer&&dragMode){updateDrag(event);event.preventDefault();}
+  });
+  function endDrag(event){
+    if(event.pointerId!==activePointer)return;
+    activePointer=null;dragMode=null;ui.scene.classList.remove('dragging');
+  }
+  ui.scene.addEventListener('pointerup',endDrag);
+  ui.scene.addEventListener('pointercancel',endDrag);
+  ui.scene.addEventListener('lostpointercapture',endDrag);
+
+  document.addEventListener('keydown',event=>{
+    if(event.altKey||event.ctrlKey||event.metaKey||event.repeat)return;
+    const target=event.target;
+    if(target instanceof HTMLElement&&(target.matches('input,textarea,select,button')||target.isContentEditable))return;
+    const key=event.key.toLowerCase();
+    if(event.code==='Space'){event.preventDefault();togglePlay();}
+    else if(key==='r'){event.preventDefault();setPhase(0);}
+    else if(key==='v'||key==='a'||key==='p'){
+      const control=key==='v'?ui.velocityToggle:key==='a'?ui.accelerationToggle:ui.projectionToggle;
+      control.checked=!control.checked;render();
+    }else if(event.key==='ArrowLeft'||event.key==='ArrowRight'){
+      event.preventDefault();setPhase(state.theta*180/Math.PI+(event.key==='ArrowRight'?1:-1));
+    }
+  });
+
+  const canFullscreen=!!(ui.app.requestFullscreen||ui.app.webkitRequestFullscreen);
+  if(!canFullscreen){ui.fullscreen.hidden=true;ui.fullscreen.style.display='none';}
+  ui.fullscreen.addEventListener('click',async()=>{
+    try{
+      if(document.fullscreenElement||document.webkitFullscreenElement){
+        if(document.exitFullscreen)await document.exitFullscreen();else if(document.webkitExitFullscreen)document.webkitExitFullscreen();
+      }else if(ui.app.requestFullscreen){await ui.app.requestFullscreen();}
+      else if(ui.app.webkitRequestFullscreen){ui.app.webkitRequestFullscreen();}
+    }catch(error){
+      ui.status.textContent='\u3053\u306e\u74b0\u5883\u3067\u306f\u5168\u753b\u9762\u8868\u793a\u3092\u958b\u59cb\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002';
+    }
+  });
+  function fullscreenChanged(){
+    const isFull=!!(document.fullscreenElement||document.webkitFullscreenElement);
+    const label=isFull?'\u5168\u753b\u9762\u3092\u7d42\u4e86':'\u5168\u753b\u9762';
+    ui.fullscreen.setAttribute('aria-label',label);ui.fullscreen.title=label;resize();
+  }
+  document.addEventListener('fullscreenchange',fullscreenChanged);
+  document.addEventListener('webkitfullscreenchange',fullscreenChanged);
+  document.addEventListener('visibilitychange',()=>{lastTime=null;});
+  if('ResizeObserver'in window)new ResizeObserver(resize).observe(ui.stage);else window.addEventListener('resize',resize);
+
+  function frame(now){
+    if(state.playing&&!document.hidden){
+      if(lastTime!==null){
+        const dt=clamp((now-lastTime)/1000,0,.1);
+        state.theta=wrap(state.theta+TAU/state.period*dt*(state.slow?.25:1));
+      }
+      render();
+      if(now-lastUiTime>65){syncPhaseControl();lastUiTime=now;}
+    }
+    lastTime=now;
+    requestAnimationFrame(frame);
+  }
+  resize();setPlaying(state.playing);requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
