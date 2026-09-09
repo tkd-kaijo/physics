@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>光線追跡ラボ</title>
+<meta name="theme-color" content="#142a56">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="光線追跡">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:system-ui,-apple-system,"Hiragino Sans",sans-serif;color:#182033;background:#f5f7fb}button,input,select{font:inherit}button{border:1px solid #d4dae6;background:white;border-radius:9px;padding:8px 10px}.app{height:100%;display:grid;grid-template-rows:auto 1fr}.bar{display:flex;gap:7px;flex-wrap:wrap;align-items:center;padding:9px;background:#fff;border-bottom:1px solid #dbe0ea}.main{min-height:0;display:grid;grid-template-columns:1fr 340px}.stage{position:relative;min-height:0;background:#fff}.stage canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}.side{overflow:auto;padding:10px;border-left:1px solid #dbe0ea}.box{background:#fff;border:1px solid #dbe0ea;border-radius:12px;padding:10px;margin-bottom:9px}.box h3{font-size:14px;margin:0 0 8px}.g{display:grid;grid-template-columns:1fr 1fr;gap:7px}label{font-size:11px;color:#687184;display:block;margin-bottom:3px}input,select{width:100%;border:1px solid #d4dae6;border-radius:8px;padding:6px;background:#fff}.card{border-top:1px solid #edf0f5;padding-top:9px;margin-top:9px}.card.selected{background:#fff9eb;border-radius:9px;padding:9px;margin-left:-5px;margin-right:-5px}.row{display:flex;gap:6px;align-items:center}.row>*{flex:1}.del{flex:0!important;color:#b43a3a}.legend{position:absolute;left:12px;top:12px;background:#ffffffdd;border:1px solid #dbe0ea;border-radius:10px;padding:7px 9px;font-size:12px;pointer-events:none}.real{color:#d24a2f}.virt{color:#7655bd}.note{font-size:11px;color:#6a7488}.imgs>div{font-size:12px;border:1px solid #e0e4ed;border-radius:8px;padding:7px;margin-top:6px}@media(max-width:850px){.main{grid-template-columns:1fr;grid-template-rows:56vh 1fr}.side{border-left:0;border-top:1px solid #dbe0ea}.bar button{font-size:12px;padding:7px}}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="bar"><button data-add="convexLens">＋凸レンズ</button><button data-add="concaveLens">＋凹レンズ</button><button data-add="concaveMirror">＋凹面鏡</button><button data-add="convexMirror">＋凸面鏡</button><button id="preset">標準配置</button><button id="clear">全削除</button></div>
+<div class="main">
+<div class="stage" id="stage"><canvas id="cv"></canvas><div class="legend">青：光線　<span class="real">赤：実像</span>　<span class="virt">紫点線：虚像</span>　橙：選択中の焦点</div></div>
+<aside class="side">
+<div class="box"><h3>物体</h3><div class="g"><div><label>x [cm]</label><input id="ox" type="number"></div><div><label>高さ [cm]</label><input id="oh" type="number"></div></div><div style="margin-top:7px"><label>光を出す向き</label><select id="edir"><option value="right">右</option><option value="left">左</option><option value="both">両方向</option></select></div></div>
+<div class="box"><h3>表示</h3><label>光線数 <span id="nlab"></span></label><input id="nr" type="range" min="7" max="41" step="2"><label style="margin-top:7px"><input id="grid" type="checkbox" style="width:auto"> 方眼を表示</label><div class="note" style="margin-top:7px">光学パーツをタップすると焦点を表示します。何もない場所をタップすると消えます。</div></div>
+<div class="box"><h3>光学素子</h3><div id="els"></div></div>
+<div class="box"><h3>像</h3><div id="imgs" class="imgs"></div><div class="note" style="margin-top:7px">薄レンズ・球面鏡の近軸近似。鏡の裏面から入射した光はそこで停止します。</div></div>
+</aside>
+</div>
+</div>
+<script>
+(()=>{
+const W={xmin:-60,xmax:120,ymin:-45,ymax:45},cv=document.getElementById('cv'),ctx=cv.getContext('2d'),stage=document.getElementById('stage'),els=document.getElementById('els'),imgs=document.getElementById('imgs');
+let id=1,selectedId=null,drag=null;
+let S={o:{x:-30,h:10,dir:'right'},n:21,grid:false,e:[]};
+const lab={convexLens:'凸レンズ',concaveLens:'凹レンズ',concaveMirror:'凹面鏡',convexMirror:'凸面鏡'},mirror=t=>t.includes('Mirror'),ff=e=>e.type==='convexLens'?e.f:e.type==='concaveLens'?-e.f:e.type==='concaveMirror'?e.f:-e.f;
+function add(type,x=10,f=25,a=42,face='left'){S.e.push({id:id++,type,x,f:Math.abs(f),a,face});ui();draw()}
+function standard(){selectedId=null;S.o={x:-30,h:10,dir:'right'};S.e=[];add('convexLens',0,12,80);add('concaveLens',12,10,80);sync()}
+function R(){const r=stage.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);cv.width=r.width*d;cv.height=r.height*d;ctx.setTransform(d,0,0,d,0,0);draw()}
+new ResizeObserver(R).observe(stage);
+function pr(){return{x:26,y:20,w:Math.max(100,stage.clientWidth-44),h:Math.max(100,stage.clientHeight-38)}}
+function sx(x){let r=pr();return r.x+(x-W.xmin)/(W.xmax-W.xmin)*r.w}
+function sy(y){let r=pr();return r.y+(W.ymax-y)/(W.ymax-W.ymin)*r.h}
+function wx(x){let r=pr();return W.xmin+(x-r.x)/r.w*(W.xmax-W.xmin)}
+function line(a,b,c,d,col='#222',w=1,dash=[]){ctx.save();ctx.strokeStyle=col;ctx.lineWidth=w;ctx.setLineDash(dash);ctx.beginPath();ctx.moveTo(sx(a),sy(b));ctx.lineTo(sx(c),sy(d));ctx.stroke();ctx.restore()}
+function bg(){ctx.clearRect(0,0,stage.clientWidth,stage.clientHeight);if(S.grid){for(let x=-60;x<=120;x+=10)line(x,-45,x,45,'#edf0f5');for(let y=-40;y<=40;y+=10)line(-60,y,120,y,'#edf0f5')}line(-60,0,120,0,'#7c8492',1.4)}
+function arrow(x,h,col='#222',dash=false){ctx.save();ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=2.5;ctx.setLineDash(dash?[6,5]:[]);ctx.beginPath();ctx.moveTo(sx(x),sy(0));ctx.lineTo(sx(x),sy(h));ctx.stroke();ctx.setLineDash([]);let p=sx(x),q=sy(h),s=h>=0?1:-1;ctx.beginPath();ctx.moveTo(p,q);ctx.lineTo(p-5,q+8*s);ctx.lineTo(p+5,q+8*s);ctx.fill();ctx.restore()}
+function mirrorCurve(e,offset=0){const x=sx(e.x),yt=sy(e.a/2),yb=sy(-e.a/2),ym=sy(0),front=e.face==='left'?-1:1,conc=e.type==='concaveMirror',edge=(conc?-front:front)*10+offset*(-front),mid=offset*(-front);ctx.beginPath();ctx.moveTo(x+edge,yt);ctx.quadraticCurveTo(x+mid,ym,x+edge,yb)}
+function optic(e){const x=sx(e.x),yt=sy(e.a/2),yb=sy(-e.a/2),ym=sy(0),sel=selectedId===e.id;ctx.save();ctx.lineWidth=sel?4:3;ctx.strokeStyle=sel?'#d98200':(mirror(e.type)?'#5f6672':'#2764a8');if(mirror(e.type)){mirrorCurve(e,0);ctx.stroke();const front=e.face==='left'?-1:1;ctx.strokeStyle='#a7aeb8';ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.save();ctx.translate(-front*5,0);mirrorCurve(e,0);ctx.stroke();ctx.restore();ctx.setLineDash([])}else{ctx.fillStyle='#7dc8f033';ctx.beginPath();if(e.type==='convexLens'){ctx.moveTo(x-2,yt);ctx.quadraticCurveTo(x-11,ym,x-2,yb);ctx.lineTo(x+2,yb);ctx.quadraticCurveTo(x+11,ym,x+2,yt)}else{ctx.moveTo(x-10,yt);ctx.quadraticCurveTo(x-3,ym,x-10,yb);ctx.lineTo(x+10,yb);ctx.quadraticCurveTo(x+3,ym,x+10,yt)}ctx.closePath();ctx.fill();ctx.stroke()}ctx.restore()}
+function focusDot(x,label='F'){if(x<W.xmin||x>W.xmax)return;const px=sx(x),py=sy(0);ctx.save();ctx.fillStyle='#e58a00';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#a85f00';ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillText(label,px,py-10);ctx.restore()}
+function drawFocus(){const e=S.e.find(q=>q.id===selectedId);if(!e)return;if(mirror(e.type)){const front=e.face==='left'?-1:1,fx=e.type==='concaveMirror'?e.x+front*e.f:e.x-front*e.f;focusDot(fx)}else{focusDot(e.x-e.f);focusDot(e.x+e.f)}}
+function next(ray){let arr=S.e.filter(e=>ray.s>0?e.x>ray.x+1e-6:e.x<ray.x-1e-6).sort((a,b)=>ray.s>0?a.x-b.x:b.x-a.x);return arr[0]}
+function trace(y,m,s){let r={x:S.o.x,y,m,s},seg=[];for(let k=0;k<20;k++){let e=next(r),xe=e?e.x:(r.s>0?W.xmax:W.xmin),yn=r.y+r.m*(xe-r.x);seg.push({x1:r.x,y1:r.y,x2:xe,y2:yn});if(!e){r={...r,x:xe,y:yn};break}if(Math.abs(yn)>e.a/2){r={...r,x:xe,y:yn};continue}if(mirror(e.type)){let good=(e.face==='left'&&r.s>0)||(e.face==='right'&&r.s<0);if(!good){r={...r,x:xe,y:yn,stop:true};break}let f=ff(e),mo=-r.m+r.s*yn/f;r={x:xe,y:yn,m:mo,s:-r.s}}else r={x:xe,y:yn,m:r.m-r.s*yn/ff(e),s:r.s}}return{seg,end:r}}
+function bundle(s){let out=[];for(let i=0;i<S.n;i++){let m=-.42+.84*i/(S.n-1);out.push(trace(S.o.h,m,s))}return out}
+function imageFrom(bs){let rr=bs.filter(b=>!b.end.stop&&Math.abs(b.end.m)<10),pts=[];for(let i=0;i<rr.length;i++)for(let j=i+1;j<rr.length;j+=Math.max(1,Math.floor(rr.length/8))){let a=rr[i].end,b=rr[j].end,d=a.m-b.m;if(Math.abs(d)<1e-5)continue;let x=(b.y-b.m*b.x-a.y+a.m*a.x)/d,y=a.y+a.m*(x-a.x);if(x<W.xmin-150||x>W.xmax+150||Math.abs(y)>150)continue;let real=((x-a.x)*a.s>0)&&((x-b.x)*b.s>0);pts.push({x,y,real})}if(!pts.length)return null;pts.sort((a,b)=>a.x-b.x);let mid=pts[Math.floor(pts.length/2)],near=pts.filter(p=>Math.abs(p.x-mid.x)<12);if(!near.length)near=pts;let x=near.reduce((q,p)=>q+p.x,0)/near.length,y=near.reduce((q,p)=>q+p.y,0)/near.length,real=near.filter(p=>p.real).length>near.length/2;return{x,y,real,ends:rr.map(q=>q.end)}}
+function run(){let all=[],ims=[];if(S.o.dir!=='left'){let b=bundle(1);all.push(...b);let z=imageFrom(b);if(z)ims.push(z)}if(S.o.dir!=='right'){let b=bundle(-1);all.push(...b);let z=imageFrom(b);if(z)ims.push(z)}return{all,ims}}
+function draw(){if(!stage.clientWidth)return;bg();let r=run();r.all.forEach(b=>b.seg.forEach(q=>line(q.x1,q.y1,q.x2,q.y2,'#168da6',1.25)));S.e.forEach(optic);drawFocus();arrow(S.o.x,S.o.h);r.ims.forEach(z=>{if(!z.real)z.ends.slice(0,12).forEach(e=>line(e.x,e.y,z.x,z.y,'#7758b8aa',1,[5,5]));if(z.x>=W.xmin&&z.x<=W.xmax&&z.y>=W.ymin&&z.y<=W.ymax)arrow(z.x,z.y,z.real?'#d44b32':'#7758b8',!z.real)});imgs.innerHTML=r.ims.length?r.ims.map((z,i)=>`<div><b class="${z.real?'real':'virt'}">${z.real?'実像':'虚像'} ${i+1}</b><br>x=${z.x.toFixed(1)} cm / 高さ=${z.y.toFixed(1)} cm / 倍率≈${(z.y/S.o.h).toFixed(2)}</div>`).join(''):'<div class="note">表示できる像はありません。</div>'}
+function ui(){els.innerHTML='';S.e.forEach((e,i)=>{let d=document.createElement('div');d.className='card'+(selectedId===e.id?' selected':'');d.innerHTML=`<div class="row"><b>${i+1}. ${lab[e.type]}</b><button class="del">削除</button></div><div class="g" style="margin-top:7px"><div><label>種類</label><select class="t"><option value="convexLens">凸レンズ</option><option value="concaveLens">凹レンズ</option><option value="concaveMirror">凹面鏡</option><option value="convexMirror">凸面鏡</option></select></div><div><label>x [cm]</label><input class="x" type="number" value="${e.x}"></div><div><label>|焦点距離| [cm]</label><input class="f" type="number" value="${e.f}" min="3"></div><div><label>直径 [cm]</label><input class="a" type="number" value="${e.a}" min="4"></div></div>${mirror(e.type)?`<div style="margin-top:7px"><label>反射面</label><select class="face"><option value="left">← 左向き</option><option value="right">右向き →</option></select></div>`:''}`;d.querySelector('.t').value=e.type;if(d.querySelector('.face'))d.querySelector('.face').value=e.face;d.querySelector('.del').onclick=()=>{if(selectedId===e.id)selectedId=null;S.e=S.e.filter(q=>q.id!==e.id);ui();draw()};d.querySelector('.t').onchange=v=>{e.type=v.target.value;ui();draw()};d.querySelector('.x').oninput=v=>{e.x=+v.target.value;draw()};d.querySelector('.f').oninput=v=>{e.f=Math.max(3,+v.target.value);draw()};d.querySelector('.a').oninput=v=>{e.a=Math.max(4,+v.target.value);draw()};if(d.querySelector('.face'))d.querySelector('.face').onchange=v=>{e.face=v.target.value;draw()};els.appendChild(d)})}
+function sync(){ox.value=S.o.x;oh.value=S.o.h;edir.value=S.o.dir;nr.value=S.n;nlab.textContent=S.n+'本';grid.checked=S.grid;ui();draw()}
+function hitOptic(px,py){let best=null,dist=1e9;for(const e of S.e){const dx=Math.abs(sx(e.x)-px),top=Math.min(sy(e.a/2),sy(-e.a/2))-12,bot=Math.max(sy(e.a/2),sy(-e.a/2))+12;if(dx<=18&&py>=top&&py<=bot&&dx<dist){best=e;dist=dx}}return best}
+document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>add(b.dataset.add,10+S.e.length*18));preset.onclick=standard;clear.onclick=()=>{selectedId=null;S.e=[];ui();draw()};ox.oninput=e=>{S.o.x=+e.target.value;draw()};oh.oninput=e=>{S.o.h=+e.target.value;draw()};edir.onchange=e=>{S.o.dir=e.target.value;draw()};nr.oninput=e=>{S.n=+e.target.value;nlab.textContent=S.n+'本';draw()};grid.onchange=e=>{S.grid=e.target.checked;draw()};
+cv.onpointerdown=e=>{const r=cv.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top,x=wx(px),hit=hitOptic(px,py);if(hit){selectedId=hit.id;drag={id:hit.id};cv.setPointerCapture(e.pointerId);ui();draw();return}if(Math.abs(sx(S.o.x)-px)<14&&py>=Math.min(sy(S.o.h),sy(0))-12&&py<=Math.max(sy(S.o.h),sy(0))+12){selectedId=null;drag={o:1};cv.setPointerCapture(e.pointerId);ui();draw();return}selectedId=null;drag=null;ui();draw()};
+cv.onpointermove=e=>{if(!drag)return;const r=cv.getBoundingClientRect(),x=Math.max(-55,Math.min(115,wx(e.clientX-r.left)));if(drag.o){S.o.x=Math.round(x*10)/10;ox.value=S.o.x}else{let q=S.e.find(q=>q.id===drag.id);if(q)q.x=Math.round(x*10)/10}ui();draw()};
+cv.onpointerup=cv.onpointercancel=()=>drag=null;
+standard();S.n=21;sync();
+})();
+</script>
+</body>
+</html>
