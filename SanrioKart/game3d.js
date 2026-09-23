@@ -37,6 +37,17 @@ let calibrationSamples = [];
 let isCalibratingTilt = false;
 let tiltCalibrated = false;
 
+// ↓ 消えてしまっていたゲーム本体用の変数
+let keys = { left: false, right: false };
+let touch = { left: false, right: false };
+let audioContext = null;
+let items = [];
+let kuromis = [];
+let particles = [];
+let cameraShake = 0;
+let grassNotice = false;
+let currentSteer = 0;
+
 const imageSources = {
   purin: "assets/01-pompompurin.png",
   cinnamon: "assets/02-cinnamon.png",
