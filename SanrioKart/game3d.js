@@ -13,7 +13,7 @@ const ui = {
 
 const TAU = Math.PI * 2;
 const ROAD_WIDTH = 250;
-const WALL_OFFSET = ROAD_WIDTH / 2 + 80;
+const WALL_OFFSET = ROAD_WIDTH / 2 + 80;ƒ
 const NORMAL_SPEED = 310;
 const BOOST_SPEED = NORMAL_SPEED * 1.5;
 const GRASS_SPEED = 120;
@@ -150,7 +150,16 @@ async function requestMotion() {
 async function startRace() {
   if (state === "countdown") return;
   state = "countdown";
-  const motionGranted = await requestMotion(); resetGame();
+
+  const motionGranted = await requestMotion();
+
+  // iPadを横向きに構えた現在の角度を取得する時間を少し確保
+  if (motionGranted) {
+    await wait(200);
+    tiltCenter = rawTilt;
+  }
+
+  resetGame();
   ui.startPanel.classList.add("hidden"); ui.finishPanel.classList.add("hidden");
   ui.hud.classList.remove("hidden"); ui.touch.classList.remove("hidden");
   if (!motionGranted) toast("傾き操作なし：画面ボタンで走れます");
