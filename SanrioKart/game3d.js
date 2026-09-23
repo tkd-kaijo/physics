@@ -188,8 +188,24 @@ function orientationAngle() {
   return typeof angle === "number" ? angle : (typeof window.orientation === "number" ? window.orientation : 0);
 }
 addEventListener("deviceorientation", event => {
-  const angle = orientationAngle(), beta = event.beta ?? 0, gamma = event.gamma ?? 0;
-  rawTilt = angle === 90 ? beta : (angle === 270 || angle === -90) ? -beta : gamma; tiltAvailable = true;
+  const beta = (event.beta ?? 0) * Math.PI / 180;
+  const gamma = (event.gamma ?? 0) * Math.PI / 180;
+  const angle = orientationAngle();
+
+  // 重力方向を端末座標で求める
+  const gx = Math.sin(gamma) * Math.cos(beta);
+  const gy = Math.sin(beta);
+
+  // 「画面上の左右方向」の傾きに変換
+  if (angle === 90) {
+    rawTilt = -gy;
+  } else if (angle === 270 || angle === -90) {
+    rawTilt = gy;
+  } else {
+    rawTilt = gx;
+  }
+
+  tiltAvailable = true;
 }, { passive: true });
 
 addEventListener("keydown", event => {
@@ -215,7 +231,16 @@ bindTouchButton(ui.left, "left"); bindTouchButton(ui.right, "right");
 function steeringInput() {
   if (keys.left || touch.left) return -1;
   if (keys.right || touch.right) return 1;
-  return tiltAvailable ? Math.max(-1, Math.min(1, (rawTilt - tiltCenter) / 24)) : 0;
+
+  if (!tiltAvailable) return 0;
+
+  // rawTilt は -1 ～ +1 程度
+  const sensitivity = 2.8;
+
+  return Math.max(
+    -1,
+    Math.min(1, (rawTilt - tiltCenter) * sensitivity)
+  );
 }
 
 function addScreenBurst(x, y, color, count = 18, power = 170) {
