@@ -29,13 +29,13 @@ let W = innerWidth, H = innerHeight, dpr = 1;
 let state = "menu";
 let raceStart = 0, lapStart = 0, elapsed = 0, lastFrame = performance.now();
 let lapTimes = [];
-let rawTilt = 0, tiltCenter = 0, tiltAvailable = false;
-let keys = { left: false, right: false };
-let touch = { left: false, right: false };
-let audioContext = null;
-let items = [], kuromis = [], particles = [];
-let cameraShake = 0, grassNotice = false, currentSteer = 0;
-let needsTiltCalibration = false;
+let rawTilt = 0;
+let tiltCenter = 0;
+let tiltAvailable = false;
+
+let calibrationSamples = [];
+let isCalibratingTilt = false;
+let tiltCalibrated = false;
 
 const imageSources = {
   purin: "assets/01-pompompurin.png",
@@ -218,40 +218,50 @@ addEventListener("devicemotion", event => {
   const x = g.x ?? 0;
   const y = g.y ?? 0;
 
-  const angle = orientationAngle();
-
-  let screenX;
-  let screenY;
-
-  // 端末座標を「現在の画面座標」に直す
-  if (angle === 90) {
-    // 横向き landscape-primary
-    screenX = -y;
-    screenY = x;
-  } else if (angle === 270 || angle === -90) {
-    // 横向き landscape-secondary
-    screenX = y;
-    screenY = -x;
-  } else if (angle === 180) {
-    screenX = -x;
-    screenY = -y;
-  } else {
-    // 縦向き
-    screenX = x;
-    screenY = y;
-  }
-
   /*
-   * iPadを垂直に立てて、
-   * ハンドルのように時計回り・反時計回りに回した角度
+   * 重力ベクトルが画面内でどちらを向いているか。
+   *
+   * iPadを垂直に立てたまま
+   * ハンドルのように回転させると、この角度が変化する。
+   *
+   * 端末の向きそのものは気にせず、
+   * スタート時との差だけを操舵に使う。
    */
-  rawTilt = Math.atan2(screenX, screenY) * 180 / Math.PI;
+  rawTilt = Math.atan2(x, -y) * 180 / Math.PI;
 
   tiltAvailable = true;
 
-  if (needsTiltCalibration) {
-    tiltCenter = rawTilt;
-    needsTiltCalibration = false;
+  // キャリブレーション中は複数回サンプリング
+  if (isCalibratingTilt) {
+    calibrationSamples.push(rawTilt);
+
+    if (calibrationSamples.length >= 20) {
+      // 角度なので普通の平均ではなく円平均
+      let sinSum = 0;
+      let cosSum = 0;
+
+      for (const angle of calibrationSamples) {
+        const rad = angle * Math.PI / 180;
+        sinSum += Math.sin(rad);
+        cosSum += Math.cos(rad);
+      }
+
+      tiltCenter =
+        Math.atan2(
+          sinSum / calibrationSamples.length,
+          cosSum / calibrationSamples.length
+        ) * 180 / Math.PI;
+
+      isCalibratingTilt = false;
+      tiltCalibrated = true;
+      calibrationSamples = [];
+
+      console.log(
+        "Tilt calibrated:",
+        "raw =", rawTilt,
+        "center =", tiltCenter
+      );
+    }
   }
 }, { passive: true });
 
@@ -278,21 +288,34 @@ function steeringInput() {
   if (keys.left || touch.left) return -1;
   if (keys.right || touch.right) return 1;
 
-  if (!tiltAvailable) return 0;
+  if (!tiltAvailable || !tiltCalibrated) {
+    return 0;
+  }
 
   let diff = rawTilt - tiltCenter;
 
-  // -180° / +180°の境界をまたいだときの補正
-  if (diff > 180) diff -= 360;
-  if (diff < -180) diff += 360;
+  // ±180°境界をまたいだ場合
+  while (diff > 180) diff -= 360;
+  while (diff < -180) diff += 360;
 
-  // 約25°回すと最大操舵
+  // 小さな手ブレを無視
+  const DEAD_ZONE = 2.5;
+
+  if (Math.abs(diff) < DEAD_ZONE) {
+    return 0;
+  }
+
+  // 約25°回せば最大ステア
   const MAX_STEER_ANGLE = 25;
 
-  return Math.max(
-    -1,
-    Math.min(1, diff / MAX_STEER_ANGLE)
-  );
+  // デッドゾーン分を差し引く
+  const sign = Math.sign(diff);
+  const adjusted =
+    sign * (Math.abs(diff) - DEAD_ZONE);
+
+  const steer = adjusted / (MAX_STEER_ANGLE - DEAD_ZONE);
+
+  return Math.max(-1, Math.min(1, steer));
 }
 
 function addScreenBurst(x, y, color, count = 18, power = 170) {
