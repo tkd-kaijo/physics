@@ -233,20 +233,38 @@ addEventListener("devicemotion", event => {
   const x = g.x ?? 0;
   const y = g.y ?? 0;
 
+  const angle =
+    typeof screen.orientation?.angle === "number"
+      ? screen.orientation.angle
+      : (typeof window.orientation === "number" ? window.orientation : 0);
+
+  let screenX;
+  let screenY;
+
+  // 端末座標 → 実際の画面座標
+  if (angle === 90) {
+    screenX = -y;
+    screenY = x;
+  } else if (angle === 270 || angle === -90) {
+    screenX = y;
+    screenY = -x;
+  } else if (angle === 180) {
+    screenX = -x;
+    screenY = -y;
+  } else {
+    screenX = x;
+    screenY = y;
+  }
+
   /*
-   * iPad 横持ち専用
+   * 画面を正面から見たときの回転角
    *
-   * 横持ちでは
-   *   device y ≒ 画面の左右方向
-   *   device x ≒ 画面の上下方向
+   * 時計回り     → 正
+   * 反時計回り   → 負
    *
-   * したがってこの2成分から、
-   * 画面をハンドルのように回した角度を求める。
-   *
-   * 前後に倒したときは主に x-z が変化するので、
-   * ハンドル角にはほとんど影響しない。
+   * 前後方向へ倒しても、角度はほぼ変化しない
    */
-  rawTilt = Math.atan2(-y, -x) * 180 / Math.PI;
+  rawTilt = Math.atan2(screenX, -screenY) * 180 / Math.PI;
 
   tiltAvailable = true;
 
@@ -257,14 +275,13 @@ addEventListener("devicemotion", event => {
       let sinSum = 0;
       let cosSum = 0;
 
-      for (const angle of calibrationSamples) {
-        const rad = angle * Math.PI / 180;
+      for (const a of calibrationSamples) {
+        const rad = a * Math.PI / 180;
         sinSum += Math.sin(rad);
         cosSum += Math.cos(rad);
       }
 
-      tiltCenter =
-        Math.atan2(sinSum, cosSum) * 180 / Math.PI;
+      tiltCenter = Math.atan2(sinSum, cosSum) * 180 / Math.PI;
 
       isCalibratingTilt = false;
       tiltCalibrated = true;
