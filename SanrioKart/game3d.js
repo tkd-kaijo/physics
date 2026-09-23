@@ -1,6 +1,6 @@
 "use strict";
 
-const $ = id => document.getElementById(id);
+const $ = id => document.getElementdeviceorientationById(id);
 const canvas = $("canvas");
 const ctx = canvas.getContext("2d", { alpha: false });
 const ui = {
@@ -35,6 +35,7 @@ let touch = { left: false, right: false };
 let audioContext = null;
 let items = [], kuromis = [], particles = [];
 let cameraShake = 0, grassNotice = false, currentSteer = 0;
+let needsTiltCalibration = false;
 
 const imageSources = {
   purin: "assets/01-pompompurin.png",
@@ -153,19 +154,33 @@ async function startRace() {
 
   const motionGranted = await requestMotion();
 
-  // iPadを横向きに構えた現在の角度を取得する時間を少し確保
+  resetGame();
+
   if (motionGranted) {
-    await wait(200);
-    tiltCenter = rawTilt;
+    needsTiltCalibration = true;
   }
 
-  resetGame();
-  ui.startPanel.classList.add("hidden"); ui.finishPanel.classList.add("hidden");
-  ui.hud.classList.remove("hidden"); ui.touch.classList.remove("hidden");
-  if (!motionGranted) toast("傾き操作なし：画面ボタンで走れます");
-  await showCount("3"); await showCount("2"); await showCount("1");
-  const now = performance.now(); raceStart = now; lapStart = now; lastFrame = now; state = "racing";
-  await showCount("スタート!", 620); ui.countdown.textContent = "";
+  ui.startPanel.classList.add("hidden");
+  ui.finishPanel.classList.add("hidden");
+  ui.hud.classList.remove("hidden");
+  ui.touch.classList.remove("hidden");
+
+  if (!motionGranted) {
+    toast("傾き操作なし：画面ボタンで走れます");
+  }
+
+  await showCount("3");
+  await showCount("2");
+  await showCount("1");
+
+  const now = performance.now();
+  raceStart = now;
+  lapStart = now;
+  lastFrame = now;
+  state = "racing";
+
+  await showCount("スタート!", 620);
+  ui.countdown.textContent = "";
 }
 
 function finishRace(now) {
@@ -206,6 +221,10 @@ addEventListener("deviceorientation", event => {
   }
 
   tiltAvailable = true;
+  if (needsTiltCalibration) {
+  tiltCenter = rawTilt;
+  needsTiltCalibration = false;
+}
 }, { passive: true });
 
 addEventListener("keydown", event => {
