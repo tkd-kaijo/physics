@@ -234,24 +234,26 @@ addEventListener("devicemotion", event => {
   const y = g.y ?? 0;
 
   /*
-   * 重力ベクトルが画面内でどちらを向いているか。
+   * iPad 横持ち専用
    *
-   * iPadを垂直に立てたまま
-   * ハンドルのように回転させると、この角度が変化する。
+   * 横持ちでは
+   *   device y ≒ 画面の左右方向
+   *   device x ≒ 画面の上下方向
    *
-   * 端末の向きそのものは気にせず、
-   * スタート時との差だけを操舵に使う。
+   * したがってこの2成分から、
+   * 画面をハンドルのように回した角度を求める。
+   *
+   * 前後に倒したときは主に x-z が変化するので、
+   * ハンドル角にはほとんど影響しない。
    */
-  rawTilt = Math.atan2(x, -y) * 180 / Math.PI;
+  rawTilt = Math.atan2(-y, -x) * 180 / Math.PI;
 
   tiltAvailable = true;
 
-  // キャリブレーション中は複数回サンプリング
   if (isCalibratingTilt) {
     calibrationSamples.push(rawTilt);
 
     if (calibrationSamples.length >= 20) {
-      // 角度なので普通の平均ではなく円平均
       let sinSum = 0;
       let cosSum = 0;
 
@@ -262,20 +264,11 @@ addEventListener("devicemotion", event => {
       }
 
       tiltCenter =
-        Math.atan2(
-          sinSum / calibrationSamples.length,
-          cosSum / calibrationSamples.length
-        ) * 180 / Math.PI;
+        Math.atan2(sinSum, cosSum) * 180 / Math.PI;
 
       isCalibratingTilt = false;
       tiltCalibrated = true;
       calibrationSamples = [];
-
-      console.log(
-        "Tilt calibrated:",
-        "raw =", rawTilt,
-        "center =", tiltCenter
-      );
     }
   }
 }, { passive: true });
