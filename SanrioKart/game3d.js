@@ -163,8 +163,10 @@ async function startRace() {
   resetGame();
 
   if (motionGranted) {
-    needsTiltCalibration = true;
-  }
+  tiltCalibrated = false;
+  calibrationSamples = [];
+  isCalibratingTilt = true;
+}
 
   ui.startPanel.classList.add("hidden");
   ui.finishPanel.classList.add("hidden");
@@ -202,7 +204,20 @@ function toast(text) {
 
 ui.start.addEventListener("click", startRace);
 ui.restart.addEventListener("click", startRace);
-ui.calibrate.addEventListener("click", () => { tiltCenter = rawTilt; toast("ハンドルを中央に合わせました"); beep(660); });
+ui.calibrate.addEventListener("click", () => { ui.calibrate.addEventListener("click", () => {
+  tiltCalibrated = false;
+  calibrationSamples = [];
+  isCalibratingTilt = true;
+
+  toast("そのまま中央で持ってください");
+
+  setTimeout(() => {
+    if (tiltCalibrated) {
+      toast("ハンドルを中央に合わせました");
+      beep(660);
+    }
+  }, 800);
+});; toast("ハンドルを中央に合わせました"); beep(660); });
 
 function orientationAngle() {
   const angle = screen.orientation?.angle;
