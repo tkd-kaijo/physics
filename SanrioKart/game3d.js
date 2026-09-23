@@ -204,7 +204,8 @@ function toast(text) {
 
 ui.start.addEventListener("click", startRace);
 ui.restart.addEventListener("click", startRace);
-ui.calibrate.addEventListener("click", () => { ui.calibrate.addEventListener("click", () => {
+
+ui.calibrate.addEventListener("click", () => {
   tiltCalibrated = false;
   calibrationSamples = [];
   isCalibratingTilt = true;
@@ -217,7 +218,7 @@ ui.calibrate.addEventListener("click", () => { ui.calibrate.addEventListener("cl
       beep(660);
     }
   }, 800);
-});; toast("ハンドルを中央に合わせました"); beep(660); });
+});
 
 function orientationAngle() {
   const angle = screen.orientation?.angle;
@@ -593,5 +594,5 @@ function frame(now) {
 }
 
 document.addEventListener("visibilitychange",()=>{lastFrame=performance.now();});
-if("serviceWorker" in navigator&&location.protocol.startsWith("http"))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
-spawnLapObjects();requestAnimationFrame(frame);
+\\ if("serviceWorker" in navigator&&location.protocol.startsWith("http"))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+\\ spawnLapObjects();requestAnimationFrame(frame);
