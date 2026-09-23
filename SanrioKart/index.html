@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#5bc45a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Sanrio Kart">
+  <title>Sanrio Kart</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="game" aria-label="Sanrio Kart ゲーム">
+    <canvas id="canvas" aria-label="レース画面"></canvas>
+
+    <section id="hud" class="hidden" aria-live="polite">
+      <div class="hud-card lap-card">
+        <span class="hud-label">LAP</span>
+        <strong id="lap">1<span>/3</span></strong>
+      </div>
+      <div class="hud-card time-card">
+        <span class="hud-label">TIME</span>
+        <strong id="time">0:00.000</strong>
+      </div>
+      <div id="effects" aria-label="発動中の効果"></div>
+      <button id="calibrate" class="glass-button" type="button" aria-label="今の持ち方をハンドルの中央にする">⌖ 中央調整</button>
+    </section>
+
+    <div id="countdown" aria-live="assertive"></div>
+    <div id="toast" aria-live="polite"></div>
+    <div id="speedLines" aria-hidden="true"></div>
+
+    <div id="touchControls" class="hidden" aria-label="画面ハンドル">
+      <button id="leftButton" type="button" aria-label="左へ曲がる">◀</button>
+      <button id="rightButton" type="button" aria-label="右へ曲がる">▶</button>
+    </div>
+
+    <section id="startPanel" class="overlay">
+      <div class="panel start-panel">
+        <div class="logo-mark" aria-hidden="true"><span>★</span></div>
+        <h1>Sanrio Kart</h1>
+        <p class="lead">iPadを横に持って、左右に傾けて走ろう！</p>
+        <div class="item-guide">
+          <div><div class="guide-icon mymelody"><span class="asset-fallback">MY</span><img src="assets/07-mymelody.png" alt=""></div><b>バリア</b><small>5秒間守る</small></div>
+          <div><div class="guide-icon cinnamon"><span class="asset-fallback">CN</span><img src="assets/02-cinnamon.png" alt=""></div><b>ブースト</b><small>4秒間1.5倍</small></div>
+          <div><div class="guide-icon purin"><span class="asset-fallback">PP</span><img src="assets/01-pompompurin.png" alt=""></div><b>ダブル</b><small>両方発動</small></div>
+        </div>
+        <button id="startButton" class="primary-button" type="button">レーススタート</button>
+        <p class="hint">PC：← → / A D　・　画面：左右ボタン</p>
+      </div>
+    </section>
+
+    <section id="finishPanel" class="overlay hidden">
+      <div class="panel finish-panel">
+        <p class="finish-kicker">3 LAPS COMPLETE!</p>
+        <h2>FINISH!</h2>
+        <div id="finalTime" class="final-time">0:00.000</div>
+        <ol id="lapTimes"></ol>
+        <button id="restartButton" class="primary-button" type="button">もう一度走る</button>
+      </div>
+    </section>
+
+    <section id="rotatePanel" aria-live="polite">
+      <div class="rotate-phone" aria-hidden="true">▣</div>
+      <strong>iPadを横向きにしてください</strong>
+    </section>
+  </main>
+  <script src="game3d.js"></script>
+</body>
+</html>
