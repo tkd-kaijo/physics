@@ -604,6 +604,17 @@ function frame(now) {
   updateKuromis(dt,now);updateParticles(dt);updatePlayer(dt,now);updateHud(now);cameraShake*=Math.pow(.84,dt*60);draw(now);requestAnimationFrame(frame);
 }
 
-document.addEventListener("visibilitychange",()=>{lastFrame=performance.now();});
-\\ if("serviceWorker" in navigator&&location.protocol.startsWith("http"))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
-\\ spawnLapObjects();requestAnimationFrame(frame);
+document.addEventListener("visibilitychange", () => {
+  lastFrame = performance.now();
+});
+
+// 開発中はService Workerを無効化
+// if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+//   addEventListener("load", () =>
+//     navigator.serviceWorker.register("sw.js").catch(() => {})
+//   );
+// }
+
+// この2つは必須
+spawnLapObjects();
+requestAnimationFrame(frame);
