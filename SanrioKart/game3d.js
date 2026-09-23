@@ -1,6 +1,6 @@
 "use strict";
 
-const $ = id => document.getElementdeviceorientationById(id);
+const $ = id => document.getElementById(id);
 const canvas = $("canvas");
 const ctx = canvas.getContext("2d", { alpha: false });
 const ui = {
@@ -13,7 +13,7 @@ const ui = {
 
 const TAU = Math.PI * 2;
 const ROAD_WIDTH = 250;
-const WALL_OFFSET = ROAD_WIDTH / 2 + 80;ƒ
+const WALL_OFFSET = ROAD_WIDTH / 2 + 80;
 const NORMAL_SPEED = 310;
 const BOOST_SPEED = NORMAL_SPEED * 1.5;
 const GRASS_SPEED = 120;
@@ -141,11 +141,17 @@ async function showCount(value, delay = 760) {
 
 async function requestMotion() {
   try {
-    if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
-      return await DeviceOrientationEvent.requestPermission() === "granted";
+    if (
+      typeof DeviceMotionEvent !== "undefined" &&
+      typeof DeviceMotionEvent.requestPermission === "function"
+    ) {
+      return await DeviceMotionEvent.requestPermission() === "granted";
     }
-    return "DeviceOrientationEvent" in window;
-  } catch (_) { return false; }
+
+    return "DeviceMotionEvent" in window;
+  } catch (_) {
+    return false;
+  }
 }
 
 async function startRace() {
@@ -200,31 +206,53 @@ ui.calibrate.addEventListener("click", () => { tiltCenter = rawTilt; toast("ハ�
 
 function orientationAngle() {
   const angle = screen.orientation?.angle;
-  return typeof angle === "number" ? angle : (typeof window.orientation === "number" ? window.orientation : 0);
+  return typeof angle === "number"
+    ? angle
+    : (typeof window.orientation === "number" ? window.orientation : 0);
 }
-addEventListener("deviceorientation", event => {
-  const beta = (event.beta ?? 0) * Math.PI / 180;
-  const gamma = (event.gamma ?? 0) * Math.PI / 180;
+
+addEventListener("devicemotion", event => {
+  const g = event.accelerationIncludingGravity;
+  if (!g) return;
+
+  const x = g.x ?? 0;
+  const y = g.y ?? 0;
+
   const angle = orientationAngle();
 
-  // 重力方向を端末座標で求める
-  const gx = Math.sin(gamma) * Math.cos(beta);
-  const gy = Math.sin(beta);
+  let screenX;
+  let screenY;
 
-  // 「画面上の左右方向」の傾きに変換
+  // 端末座標を「現在の画面座標」に直す
   if (angle === 90) {
-    rawTilt = -gy;
+    // 横向き landscape-primary
+    screenX = -y;
+    screenY = x;
   } else if (angle === 270 || angle === -90) {
-    rawTilt = gy;
+    // 横向き landscape-secondary
+    screenX = y;
+    screenY = -x;
+  } else if (angle === 180) {
+    screenX = -x;
+    screenY = -y;
   } else {
-    rawTilt = gx;
+    // 縦向き
+    screenX = x;
+    screenY = y;
   }
 
+  /*
+   * iPadを垂直に立てて、
+   * ハンドルのように時計回り・反時計回りに回した角度
+   */
+  rawTilt = Math.atan2(screenX, screenY) * 180 / Math.PI;
+
   tiltAvailable = true;
+
   if (needsTiltCalibration) {
-  tiltCenter = rawTilt;
-  needsTiltCalibration = false;
-}
+    tiltCenter = rawTilt;
+    needsTiltCalibration = false;
+  }
 }, { passive: true });
 
 addEventListener("keydown", event => {
@@ -246,19 +274,24 @@ function bindTouchButton(button, side) {
   button.addEventListener("lostpointercapture", () => set(false));
 }
 bindTouchButton(ui.left, "left"); bindTouchButton(ui.right, "right");
-
 function steeringInput() {
   if (keys.left || touch.left) return -1;
   if (keys.right || touch.right) return 1;
 
   if (!tiltAvailable) return 0;
 
-  // rawTilt は -1 ～ +1 程度
-  const sensitivity = 2.8;
+  let diff = rawTilt - tiltCenter;
+
+  // -180° / +180°の境界をまたいだときの補正
+  if (diff > 180) diff -= 360;
+  if (diff < -180) diff += 360;
+
+  // 約25°回すと最大操舵
+  const MAX_STEER_ANGLE = 25;
 
   return Math.max(
     -1,
-    Math.min(1, (rawTilt - tiltCenter) * sensitivity)
+    Math.min(1, diff / MAX_STEER_ANGLE)
   );
 }
 
